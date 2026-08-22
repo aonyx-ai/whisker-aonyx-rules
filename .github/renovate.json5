@@ -7,5 +7,14 @@
       matchDepTypes: ["toolchain"],
       schedule: ["on the first day of the month"],
     },
+    {
+      // Whisker refuses to load a plugin built against different whisker
+      // source than the binary loading it, and the lint pass trait is
+      // generated, so a rule compiled against one revision of whisker-rust
+      // does not even build against another revision of whisker-types.
+      // These three are one decision, never three.
+      matchPackageNames: ["whisker-rust", "whisker-testing", "whisker-types"],
+      groupName: "whisker",
+    },
   ],
 }
