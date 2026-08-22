@@ -1,14 +1,13 @@
 # A lint is its own cargo package, built as a cdylib and loaded by whisker at
-# check time. It is not a workspace member: the handshake compares the whisker
-# it was compiled against with the whisker loading it, and a package outside
-# the workspace resolves its own dependencies, which is what a lint written
-# outside this repository does too. The lockfile beside this manifest pins
-# that resolution.
+# check time. Every rule here is built against one pinned whisker revision,
+# named once in the workspace manifest, because the handshake compares the
+# whisker a plugin was compiled against with the whisker loading it.
 [package]
 name = "no_todo_comments"
-version = "0.1.0"
-edition = "2024"
-license = "Apache-2.0 OR MIT"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 publish = false
 
 [lib]
@@ -25,12 +24,11 @@ default = ["plugin"]
 plugin = []
 
 [dependencies]
-whisker-rust = { path = "../../crates/whisker-rust", default-features = false }
-whisker-types = { path = "../../crates/whisker-types" }
+whisker-rust = { workspace = true }
+whisker-types = { workspace = true }
 
 [dev-dependencies]
-whisker-testing = { path = "../../crates/whisker-testing" }
+whisker-testing = { workspace = true }
 
-[lints.clippy]
-missing_errors_doc = "warn"
-missing_panics_doc = "warn"
+[lints]
+workspace = true

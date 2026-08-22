@@ -1,0 +1,36 @@
+# Every rule in this repository is a whisker plugin: a cdylib that whisker
+# builds at check time and loads into its own process. Rust has no stable ABI,
+# so a plugin is only coherent with the whisker that loads it when the same
+# rustc compiled both from the same whisker source. That is why the pin below
+# and `rust-toolchain.toml` move together, and why a mismatch is a loud
+# refusal rather than a subtle wrong answer.
+[workspace]
+members = ["lints/*"]
+
+# Opt-in to the new feature resolver introduced in Rust 1.85 and Edition 2024.
+# https://doc.rust-lang.org/cargo/reference/resolver.html#resolver-versions
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/aonyx-ai/whisker-aonyx-rules.git"
+
+[workspace.lints.clippy]
+missing_errors_doc = "warn"
+missing_panics_doc = "warn"
+
+[workspace.dependencies]
+proptest = "1"
+# `DecoratedNode::raw()` returns a `tree_sitter::Node`, which some rules name
+# directly. The version matches whisker's own so that the plugin and the host
+# agree on the type that crosses the boundary.
+tree-sitter = "0.26"
+# One pin for every rule. Whisker is not published, so these are git
+# dependencies rather than versions; bump all three together, and bump
+# `rust-toolchain.toml` with them when whisker's does.
+whisker-rust = { git = "https://github.com/aonyx-ai/whisker.git", rev = "52037ae45548248cb446069f4d1ff64439fc2d91", default-features = false }
+whisker-testing = { git = "https://github.com/aonyx-ai/whisker.git", rev = "52037ae45548248cb446069f4d1ff64439fc2d91" }
+whisker-types = { git = "https://github.com/aonyx-ai/whisker.git", rev = "52037ae45548248cb446069f4d1ff64439fc2d91" }
