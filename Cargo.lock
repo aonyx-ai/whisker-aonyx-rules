@@ -23,7 +23,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -59,7 +59,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -84,7 +84,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -109,7 +109,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -136,7 +136,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -174,7 +174,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -212,7 +212,7 @@ dependencies = [
  "tree-sitter",
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -227,7 +227,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -236,7 +236,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -247,7 +247,7 @@ dependencies = [
  "tree-sitter",
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -256,7 +256,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -266,7 +266,7 @@ dependencies = [
  "tree-sitter",
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -275,7 +275,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -284,7 +284,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -345,7 +345,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -419,7 +419,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -457,7 +457,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -550,7 +550,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
@@ -672,11 +672,11 @@ dependencies = [
 [[package]]
 name = "whisker-core"
 version = "0.1.0"
-source = "git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91#52037ae45548248cb446069f4d1ff64439fc2d91"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=32ce75332d0a5f7ad8cf667e222c7ecdf3a58c50#32ce75332d0a5f7ad8cf667e222c7ecdf3a58c50"
 dependencies = [
  "anyhow",
  "tree-sitter",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=32ce75332d0a5f7ad8cf667e222c7ecdf3a58c50)",
 ]
 
 [[package]]
@@ -698,18 +698,28 @@ dependencies = [
  "tree-sitter-rust",
  "whisker-codegen",
  "whisker-macros",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
 name = "whisker-testing"
 version = "0.1.0"
-source = "git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91#52037ae45548248cb446069f4d1ff64439fc2d91"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=32ce75332d0a5f7ad8cf667e222c7ecdf3a58c50#32ce75332d0a5f7ad8cf667e222c7ecdf3a58c50"
 dependencies = [
  "tree-sitter",
  "tree-sitter-rust",
  "whisker-core",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=32ce75332d0a5f7ad8cf667e222c7ecdf3a58c50)",
+]
+
+[[package]]
+name = "whisker-types"
+version = "0.1.0"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=32ce75332d0a5f7ad8cf667e222c7ecdf3a58c50#32ce75332d0a5f7ad8cf667e222c7ecdf3a58c50"
+dependencies = [
+ "anyhow",
+ "rustc_version",
+ "tree-sitter",
 ]
 
 [[package]]
@@ -728,7 +738,7 @@ version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
- "whisker-types",
+ "whisker-types 0.1.0 (git+https://github.com/aonyx-ai/whisker.git?rev=52037ae45548248cb446069f4d1ff64439fc2d91)",
 ]
 
 [[package]]
