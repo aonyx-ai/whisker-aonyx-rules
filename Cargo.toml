@@ -31,6 +31,6 @@ tree-sitter = "0.26"
 # One pin for every rule. Whisker is not published, so these are git
 # dependencies rather than versions; bump all three together, and bump
 # `rust-toolchain.toml` with them when whisker's does.
-whisker-rust = { git = "https://github.com/aonyx-ai/whisker.git", rev = "52037ae45548248cb446069f4d1ff64439fc2d91", default-features = false }
+whisker-rust = { git = "https://github.com/aonyx-ai/whisker.git", rev = "32ce75332d0a5f7ad8cf667e222c7ecdf3a58c50", default-features = false }
 whisker-testing = { git = "https://github.com/aonyx-ai/whisker.git", rev = "52037ae45548248cb446069f4d1ff64439fc2d91" }
 whisker-types = { git = "https://github.com/aonyx-ai/whisker.git", rev = "52037ae45548248cb446069f4d1ff64439fc2d91" }
