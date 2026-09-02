@@ -22,7 +22,14 @@ test:
 # The whisker binary must come from the revision `Cargo.toml` pins, because a
 # plugin built against one whisker is refused by any other.
 check-self whisker="whisker":
-    {{ whisker }} check .
+    #!/usr/bin/env -S bash -euo pipefail
+    # Rustup honors the `rust-toolchain.toml` beside the package it builds,
+    # and whisker passes its environment to the cargo it runs. Naming the
+    # toolchain builds these rules with the one this repository pins, which
+    # is whisker's. Without it, a toolchain bump here would refuse the
+    # plugins whisker had just built, until the pin moved to match.
+    RUSTUP_TOOLCHAIN="$(rustup show active-toolchain | cut -d" " -f1)" \
+        {{ whisker }} check .
 
 # Assemble an archive of prebuilt lints for one whisker
 package-lints rev whisker:

@@ -1,6 +1,26 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: ["github>aonyx-ai/renovate-config"],
+  customManagers: [
+    {
+      // The three whisker crates are one decision, never three. Cargo's own
+      // manager reads them as three git dependencies and opens three pull
+      // requests, each leaving the crates on different revisions, and a
+      // rule compiled against one revision of whisker-rust does not build
+      // against another revision of whisker-types.
+      //
+      // This reads all three as one dependency, and moves the digest with
+      // the release comment beside it, the way renovate moves a pinned
+      // GitHub action.
+      customType: "regex",
+      fileMatch: ["^Cargo\\.toml$"],
+      matchStrings: [
+        "whisker-\\w+ = \\{ git = \"https://github\\.com/aonyx-ai/whisker\\.git\", rev = \"(?<currentDigest>[0-9a-f]{40})\"[^\\n]*\\} # (?<currentValue>v\\S+)",
+      ],
+      depNameTemplate: "aonyx-ai/whisker",
+      datasourceTemplate: "github-tags",
+    },
+  ],
   packageRules: [
     {
       matchPackageNames: ["rust"],
@@ -8,13 +28,15 @@
       schedule: ["on the first day of the month"],
     },
     {
-      // Whisker refuses to load a plugin built against different whisker
-      // source than the binary loading it, and the lint pass trait is
-      // generated, so a rule compiled against one revision of whisker-rust
-      // does not even build against another revision of whisker-types.
-      // These three are one decision, never three.
-      matchPackageNames: ["whisker-rust", "whisker-testing", "whisker-types"],
-      groupName: "whisker",
+      // Whisker ships a prerelease today, and renovate passes over those
+      // unless it is told not to.
+      //
+      // The pin also decides which rustc built the plugins, and it has to
+      // move with `rust-toolchain.toml`, which renovate cannot know. A
+      // person merges this one.
+      matchDepNames: ["aonyx-ai/whisker"],
+      ignoreUnstable: false,
+      automerge: false,
     },
   ],
 }
