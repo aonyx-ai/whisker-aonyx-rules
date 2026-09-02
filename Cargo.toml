@@ -27,10 +27,10 @@ proptest = "1"
 # `DecoratedNode::raw()` returns a `tree_sitter::Node`, which some rules name
 # directly. The version matches whisker's own so that the plugin and the host
 # agree on the type that crosses the boundary.
-tree-sitter = "0.26"
+tree-sitter = "0.27"
 # One pin for every rule. Whisker is not published, so these are git
 # dependencies rather than versions; bump all three together, and bump
 # `rust-toolchain.toml` with them when whisker's does.
-whisker-rust = { git = "https://github.com/aonyx-ai/whisker.git", rev = "52037ae45548248cb446069f4d1ff64439fc2d91", default-features = false }
-whisker-testing = { git = "https://github.com/aonyx-ai/whisker.git", rev = "52037ae45548248cb446069f4d1ff64439fc2d91" }
-whisker-types = { git = "https://github.com/aonyx-ai/whisker.git", rev = "52037ae45548248cb446069f4d1ff64439fc2d91" }
+whisker-rust = { git = "https://github.com/aonyx-ai/whisker.git", rev = "c70a2c8d43450be8937ac3f01dc50093db80ea0c", default-features = false }
+whisker-testing = { git = "https://github.com/aonyx-ai/whisker.git", rev = "c70a2c8d43450be8937ac3f01dc50093db80ea0c" }
+whisker-types = { git = "https://github.com/aonyx-ai/whisker.git", rev = "c70a2c8d43450be8937ac3f01dc50093db80ea0c" }

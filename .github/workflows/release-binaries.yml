@@ -1,0 +1,84 @@
+---
+name: Release binaries
+
+"on":
+  release:
+    types: [published]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  archives:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+
+    permissions:
+      contents: write # Required to attach the archives to the release
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-24.04-arm
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: rules
+          persist-credentials: false
+
+      - name: Install Just
+        uses: taiki-e/install-action@a2a5f6e99e1a31540baa0468acfa302cff0f359f # v2.86.4
+        with:
+          tool: just
+
+      # The pin lives in the workspace manifest, so this reads it rather
+      # than repeating it. Whisker refuses a plugin built against any other
+      # revision, and the tag it asks for comes from that same whisker.
+      - name: Read the pinned whisker revision
+        id: pin
+        run: echo "rev=$(just --justfile rules/justfile --working-directory rules pin)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout whisker at the pinned revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: aonyx-ai/whisker
+          ref: ${{ steps.pin.outputs.rev }}
+          path: whisker
+          persist-credentials: false
+
+      # Both repositories pin the same toolchain, and they have to: the
+      # handshake compares the rustc that built each side.
+      - name: Install the pinned toolchain
+        working-directory: rules
+        run: rustup toolchain install
+
+      # This job deliberately keeps no Cargo cache. A pull request can write
+      # to one, and these archives are loaded into whisker's own process on
+      # someone else's machine.
+      - name: Build whisker at the pin
+        working-directory: whisker
+        run: cargo build --release --locked -p whisker
+
+      - name: Assemble the archive
+        working-directory: rules
+        env:
+          REV: ${{ github.sha }}
+        run: just package-lints "${REV}" ../whisker/target/release/whisker
+
+      - name: Attach the archive to the release
+        working-directory: rules
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "${TAG}" dist/*.tar.gz dist/*.sha256 --clobber
