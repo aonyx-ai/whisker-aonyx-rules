@@ -257,6 +257,12 @@ fn is_field_base(node: &DecoratedNode<'_>) -> bool {
 }
 
 #[cfg(feature = "plugin")]
+impl whisker_rust::DeclaresRules for ExplicitDestructuring {
+    fn rules(&self) -> Vec<RuleId> {
+        vec![RuleId::new("lint.explicit-destructuring")]
+    }
+}
+
 whisker_rust::export_lints![ExplicitDestructuring];
 
 #[cfg(test)]

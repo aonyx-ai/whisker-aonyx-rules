@@ -379,6 +379,12 @@ fn is_terminated_statement(node: Node<'_>) -> bool {
 }
 
 #[cfg(feature = "plugin")]
+impl whisker_rust::DeclaresRules for NoCommentedOutCode {
+    fn rules(&self) -> Vec<RuleId> {
+        vec![RuleId::new("lint.no-commented-out-code")]
+    }
+}
+
 whisker_rust::export_lints![NoCommentedOutCode::new()];
 
 #[cfg(test)]

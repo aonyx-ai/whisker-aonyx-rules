@@ -194,6 +194,12 @@ impl RustLintPass for NoInlineComments {
 }
 
 #[cfg(feature = "plugin")]
+impl whisker_rust::DeclaresRules for NoInlineComments {
+    fn rules(&self) -> Vec<RuleId> {
+        vec![RuleId::new("lint.no-inline-comments")]
+    }
+}
+
 whisker_rust::export_lints![NoInlineComments];
 
 #[cfg(test)]

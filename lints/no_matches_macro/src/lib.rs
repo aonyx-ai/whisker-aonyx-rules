@@ -30,6 +30,12 @@ impl RustLintPass for NoMatchesMacro {
 }
 
 #[cfg(feature = "plugin")]
+impl whisker_rust::DeclaresRules for NoMatchesMacro {
+    fn rules(&self) -> Vec<RuleId> {
+        vec![RuleId::new("lint.no-matches-macro")]
+    }
+}
+
 whisker_rust::export_lints![NoMatchesMacro];
 
 #[cfg(test)]

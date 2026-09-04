@@ -113,6 +113,12 @@ impl RustLintPass for NoTodoComments {
 }
 
 #[cfg(feature = "plugin")]
+impl whisker_rust::DeclaresRules for NoTodoComments {
+    fn rules(&self) -> Vec<RuleId> {
+        vec![RuleId::new("lint.no-todo-comments")]
+    }
+}
+
 whisker_rust::export_lints![NoTodoComments];
 
 #[cfg(test)]
