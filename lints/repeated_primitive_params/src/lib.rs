@@ -174,6 +174,12 @@ impl RustLintPass for RepeatedPrimitiveParams {
 }
 
 #[cfg(feature = "plugin")]
+impl whisker_rust::DeclaresRules for RepeatedPrimitiveParams {
+    fn rules(&self) -> Vec<RuleId> {
+        vec![RuleId::new("lint.repeated-primitive-params")]
+    }
+}
+
 whisker_rust::export_lints![RepeatedPrimitiveParams];
 
 #[cfg(test)]

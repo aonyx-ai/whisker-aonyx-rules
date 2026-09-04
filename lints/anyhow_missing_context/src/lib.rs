@@ -133,6 +133,12 @@ fn is_context_call(operand: &DecoratedNode<'_>) -> bool {
 }
 
 #[cfg(feature = "plugin")]
+impl whisker_rust::DeclaresRules for AnyhowMissingContext {
+    fn rules(&self) -> Vec<RuleId> {
+        vec![RuleId::new("lint.anyhow-missing-context")]
+    }
+}
+
 whisker_rust::export_lints![AnyhowMissingContext];
 
 #[cfg(test)]

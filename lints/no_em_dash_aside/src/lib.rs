@@ -782,6 +782,12 @@ fn is_content(byte: &u8) -> bool {
 }
 
 #[cfg(feature = "plugin")]
+impl whisker_rust::DeclaresRules for NoEmDashAside {
+    fn rules(&self) -> Vec<RuleId> {
+        vec![RuleId::new("lint.no-em-dash-aside")]
+    }
+}
+
 whisker_rust::export_lints![NoEmDashAside];
 
 #[cfg(test)]

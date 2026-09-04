@@ -158,6 +158,12 @@ fn report(lines: &[DocLine<'_>], node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
 }
 
 #[cfg(feature = "plugin")]
+impl whisker_rust::DeclaresRules for LongDocSentence {
+    fn rules(&self) -> Vec<RuleId> {
+        vec![RuleId::new("lint.long-doc-sentence")]
+    }
+}
+
 whisker_rust::export_lints![LongDocSentence];
 
 #[cfg(test)]

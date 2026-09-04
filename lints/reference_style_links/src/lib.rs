@@ -145,6 +145,12 @@ fn continues(previous: &DecoratedNode<'_>, candidate: &DecoratedNode<'_>) -> boo
 }
 
 #[cfg(feature = "plugin")]
+impl whisker_rust::DeclaresRules for ReferenceStyleLinks {
+    fn rules(&self) -> Vec<RuleId> {
+        vec![RuleId::new("lint.reference-style-links")]
+    }
+}
+
 whisker_rust::export_lints![ReferenceStyleLinks];
 
 #[cfg(test)]

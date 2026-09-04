@@ -563,6 +563,12 @@ fn join_traits(traits: &[AutoTrait]) -> String {
 }
 
 #[cfg(feature = "plugin")]
+impl whisker_rust::DeclaresRules for MissingTraitTests {
+    fn rules(&self) -> Vec<RuleId> {
+        vec![RuleId::new("lint.missing-trait-tests")]
+    }
+}
+
 whisker_rust::export_lints![MissingTraitTests];
 
 #[cfg(test)]

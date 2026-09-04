@@ -196,6 +196,12 @@ fn shared_head<'a>(first: &'a str, second: &str) -> Option<&'a str> {
 }
 
 #[cfg(feature = "plugin")]
+impl whisker_rust::DeclaresRules for ShadowTransformations {
+    fn rules(&self) -> Vec<RuleId> {
+        vec![RuleId::new("lint.shadow-transformations")]
+    }
+}
+
 whisker_rust::export_lints![ShadowTransformations];
 
 #[cfg(test)]
