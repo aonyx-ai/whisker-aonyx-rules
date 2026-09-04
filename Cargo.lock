@@ -79,7 +79,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
+name = "commented_out_code"
+version = "0.1.0"
+dependencies = [
+ "proptest",
+ "tree-sitter",
+ "whisker-rust",
+ "whisker-testing",
+ "whisker-types",
+]
+
+[[package]]
 name = "derive_order"
+version = "0.1.0"
+dependencies = [
+ "whisker-rust",
+ "whisker-testing",
+ "whisker-types",
+]
+
+[[package]]
+name = "em_dash_aside"
 version = "0.1.0"
 dependencies = [
  "whisker-rust",
@@ -101,15 +121,6 @@ checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
  "windows-sys",
-]
-
-[[package]]
-name = "explicit_destructuring"
-version = "0.1.0"
-dependencies = [
- "whisker-rust",
- "whisker-testing",
- "whisker-types",
 ]
 
 [[package]]
@@ -188,6 +199,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "inline_comment"
+version = "0.1.0"
+dependencies = [
+ "tree-sitter",
+ "whisker-rust",
+ "whisker-testing",
+ "whisker-types",
+]
+
+[[package]]
+name = "inline_doc_link"
+version = "0.1.0"
+dependencies = [
+ "whisker-rust",
+ "whisker-testing",
+ "whisker-types",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -216,6 +246,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "matches_macro"
+version = "0.1.0"
+dependencies = [
+ "whisker-rust",
+ "whisker-testing",
+ "whisker-types",
+]
+
+[[package]]
 name = "memchr"
 version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -232,54 +271,6 @@ dependencies = [
 
 [[package]]
 name = "missing_trait_tests"
-version = "0.1.0"
-dependencies = [
- "whisker-rust",
- "whisker-testing",
- "whisker-types",
-]
-
-[[package]]
-name = "no_commented_out_code"
-version = "0.1.0"
-dependencies = [
- "proptest",
- "tree-sitter",
- "whisker-rust",
- "whisker-testing",
- "whisker-types",
-]
-
-[[package]]
-name = "no_em_dash_aside"
-version = "0.1.0"
-dependencies = [
- "whisker-rust",
- "whisker-testing",
- "whisker-types",
-]
-
-[[package]]
-name = "no_inline_comments"
-version = "0.1.0"
-dependencies = [
- "tree-sitter",
- "whisker-rust",
- "whisker-testing",
- "whisker-types",
-]
-
-[[package]]
-name = "no_matches_macro"
-version = "0.1.0"
-dependencies = [
- "whisker-rust",
- "whisker-testing",
- "whisker-types",
-]
-
-[[package]]
-name = "no_todo_comments"
 version = "0.1.0"
 dependencies = [
  "whisker-rust",
@@ -414,15 +405,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "reference_style_links"
-version = "0.1.0"
-dependencies = [
- "whisker-rust",
- "whisker-testing",
- "whisker-types",
-]
-
-[[package]]
 name = "regex"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -450,6 +432,15 @@ name = "regex-syntax"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
+
+[[package]]
+name = "repeated_field_access"
+version = "0.1.0"
+dependencies = [
+ "whisker-rust",
+ "whisker-testing",
+ "whisker-types",
+]
 
 [[package]]
 name = "repeated_primitive_params"
@@ -545,19 +536,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "shadow_transformations"
+name = "shlex"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
+
+[[package]]
+name = "split_binding"
 version = "0.1.0"
 dependencies = [
  "whisker-rust",
  "whisker-testing",
  "whisker-types",
 ]
-
-[[package]]
-name = "shlex"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "streaming-iterator"
@@ -598,6 +589,15 @@ dependencies = [
  "once_cell",
  "rustix",
  "windows-sys",
+]
+
+[[package]]
+name = "todo_comment"
+version = "0.1.0"
+dependencies = [
+ "whisker-rust",
+ "whisker-testing",
+ "whisker-types",
 ]
 
 [[package]]

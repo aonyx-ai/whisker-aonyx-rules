@@ -46,7 +46,7 @@ wrong answer.
 
 ## Adding a rule
 
-Copy the smallest existing rule, `lints/no_todo_comments`, and change the
+Copy the smallest existing rule, `lints/todo_comment`, and change the
 name in its `Cargo.toml`, its rule id, and its logic. A rule implements the
 generated `RustLintPass` trait, returns diagnostics with a stable rule id
 and a severity, and hands itself to `export_lints!`. Rules that read
