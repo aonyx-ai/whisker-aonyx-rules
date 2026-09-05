@@ -36,4 +36,4 @@ tree-sitter = "0.27"
 # `rust-toolchain.toml` with them when whisker's does.
 whisker-rust = { git = "https://github.com/aonyx-ai/whisker.git", rev = "4da6161790386c8093b4c8437434fd933b900a23", default-features = false } # v0.1.0-rc.3
 whisker-testing = { git = "https://github.com/aonyx-ai/whisker.git", rev = "4da6161790386c8093b4c8437434fd933b900a23" } # v0.1.0-rc.3
-whisker-types = { git = "https://github.com/aonyx-ai/whisker.git", rev = "4da6161790386c8093b4c8437434fd933b900a23" } # v0.1.0-rc.3
+whisker-types = { git = "https://github.com/aonyx-ai/whisker.git", rev = "bbf4f2b0a41313f49d531d81771839e4e14d607d" } # v0.1.0-rc.3
