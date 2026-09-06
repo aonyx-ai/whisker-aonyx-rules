@@ -117,6 +117,9 @@ fn analyze(block: &DecoratedNode<'_>) -> Vec<Diagnostic> {
         let Some(shared) = shared_head(binding.name, successor.name) else {
             continue;
         };
+        if !draws_only_on(&successor.value, binding.name) {
+            continue;
+        }
         if is_captured_by_format(&text[binding.end - start..], binding.name) {
             continue;
         }
@@ -152,6 +155,102 @@ fn collect_identifiers<'a>(node: &DecoratedNode<'a>, out: &mut Vec<DecoratedNode
 fn contains(node: &DecoratedNode<'_>, offset: usize) -> bool {
     let range = node.raw().byte_range();
     range.start <= offset && offset < range.end
+}
+
+/// Returns whether `value` is built from `name` and nothing else in scope
+///
+/// A chain of transformations has one source. `input.trim()` and
+/// `parse(input)?` each draw on `input` alone, so the two bindings hold one
+/// value at two stages and shadowing says so.
+///
+/// A value built from several things is not that. `conn.query_row(sql, (kind,
+/// payload, app_id), read)` names an app's id among its arguments and returns
+/// a job's id, and giving both names to one binding would say they are the
+/// same value. The same goes for `author.unwrap_or(&default_author)`, where
+/// the second binding borrows from the first and the two cannot merge at all.
+///
+/// The names of the things being called do not count as sources, and neither
+/// does a name the initializer binds itself, so a closure parameter in
+/// `xs.iter().map(|x| f(x))` leaves `xs` the only source.
+fn draws_only_on(value: &DecoratedNode<'_>, name: &str) -> bool {
+    let mut bound = Vec::new();
+    collect_closure_parameters(value, &mut bound);
+
+    let mut sources = Vec::new();
+    collect_sources(value, &mut sources);
+
+    let outer: Vec<&str> = sources
+        .into_iter()
+        .filter(|source| !bound.iter().any(|parameter| parameter == source))
+        .collect();
+
+    !outer.is_empty() && outer.iter().all(|source| *source == name)
+}
+
+/// Appends the name of every identifier below `node` that reads a value
+///
+/// A method's name, a called function's name, the path of a scoped name, and
+/// the field named on the left of a struct literal all appear as identifiers
+/// and none of them reads a value, so each is skipped.
+fn collect_sources<'a>(node: &DecoratedNode<'a>, out: &mut Vec<&'a str>) {
+    let skip = match node.kind() {
+        "field_expression" => node.child_by_field_name("field"),
+        "call_expression" => node
+            .child_by_field_name("function")
+            .filter(|function| function.kind() == "identifier"),
+        "field_initializer" => node.child_by_field_name("field"),
+        "scoped_identifier" | "generic_function" => Some(node.clone()),
+        _ => None,
+    };
+
+    for child in node.named_children() {
+        if let Some(skipped) = &skip
+            && skipped.id() == child.id()
+        {
+            continue;
+        }
+        if child.kind() == "identifier" {
+            let text = child.text();
+            let is_type = match text.chars().next() {
+                Some(first) => first.is_uppercase(),
+                None => false,
+            };
+            if !is_type {
+                out.push(text);
+            }
+        }
+        collect_sources(&child, out);
+    }
+
+    if node.kind() == "scoped_identifier" || node.kind() == "generic_function" {
+        out.retain(|source| !node.text().contains(source));
+    }
+}
+
+/// Appends the name of every closure parameter below `node` to `out`
+///
+/// Such a name is bound by the initializer itself, so it is not something the
+/// initializer draws on from the scope around it.
+fn collect_closure_parameters<'a>(node: &DecoratedNode<'a>, out: &mut Vec<&'a str>) {
+    if node.kind() == "closure_expression"
+        && let Some(parameters) = node.child_by_field_name("parameters")
+    {
+        collect_identifiers_named(&parameters, out);
+    }
+
+    for child in node.named_children() {
+        collect_closure_parameters(&child, out);
+    }
+}
+
+/// Appends the name of every identifier below `node` to `out`
+fn collect_identifiers_named<'a>(node: &DecoratedNode<'a>, out: &mut Vec<&'a str>) {
+    if node.kind() == "identifier" {
+        out.push(node.text());
+    }
+    for child in node.named_children() {
+        collect_identifiers_named(&child, out);
+    }
 }
 
 /// Returns the last word of a snake_case name
@@ -219,6 +318,58 @@ mod tests {
     fn run(source: &str) -> Vec<Diagnostic> {
         let tree = parse(source, Language::Rust);
         execute(&tree, &mut passes())
+    }
+
+    /// A binding that is one argument among several is not a stage of the
+    /// value that follows it.
+    ///
+    /// Taken from raft, where `app_id` names an app and `id` names the job
+    /// row the insert returned. Shadowing them into one name would say an app
+    /// and a job have the same id.
+    #[test]
+    fn a_binding_passed_beside_other_values_is_not_flagged() {
+        let source = "fn f(conn: &C, payload: &P, kind: &str) -> R {\n    \
+             let app_id = app_id_for(conn, payload);\n    \
+             let id: i64 = conn.query_row(SQL, (kind, payload, app_id), read)?;\n    \
+             id\n}";
+
+        let diagnostics = run(source);
+
+        assert_no_diagnostics(&diagnostics);
+    }
+
+    /// A binding the next one borrows from cannot merge with it at all.
+    ///
+    /// Taken from raft. `author` is already a parameter, so the suggested
+    /// rewrite would have the binding borrow from itself and would not
+    /// compile.
+    #[test]
+    fn a_binding_borrowed_by_its_successor_is_not_flagged() {
+        let source = "fn f(author: Option<&Author>) -> &str {\n    \
+             let default_author = Author::default_raft();\n    \
+             let author = author.unwrap_or(&default_author);\n    \
+             author.name\n}";
+
+        let diagnostics = run(source);
+
+        assert_no_diagnostics(&diagnostics);
+    }
+
+    /// A closure parameter is bound by the initializer, so it does not make
+    /// the initializer draw on a second thing.
+    #[test]
+    fn a_closure_parameter_does_not_count_as_a_second_source() {
+        let source = "fn f() -> Vec<i32> {\n    \
+             let raw_values = read_values();\n    \
+             let mapped_values = raw_values.iter().map(|value| value + 1).collect();\n    \
+             mapped_values\n}";
+
+        let diagnostics = run(source);
+
+        assert_diagnostic(&diagnostics[0])
+            .has_rule_id("lint.split-binding")
+            .has_severity(Severity::Warn)
+            .message_contains("`raw_values`");
     }
 
     #[test]
