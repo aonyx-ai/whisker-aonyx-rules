@@ -153,6 +153,40 @@ mod tests {
         execute(&tree, &mut passes)
     }
 
+    /// Pins that this rule ignores every signature the shared corpus holds
+    ///
+    /// The corpus is what stops two rules reading one option from drifting
+    /// apart. `bool_param` once reported an `extern` signature that
+    /// `repeated_primitive_params` skipped, and no test failed, because
+    /// only one of them had `extern` cases.
+    #[test]
+    fn every_boundary_in_the_shared_corpus_reports_nothing() {
+        for source in boundary::corpus::EXEMPT {
+            let diagnostics = run_with_boundary_attributes(source, boundary::corpus::ATTRIBUTES);
+
+            assert!(
+                diagnostics.is_empty(),
+                "should report nothing for a boundary: {source}"
+            );
+        }
+    }
+
+    /// Pins that this rule still reports what the corpus says it must
+    ///
+    /// A rule that exempts too much reports nothing, which reads exactly
+    /// like a rule that found no fault.
+    #[test]
+    fn every_signature_off_the_boundary_in_the_shared_corpus_reports() {
+        for source in boundary::corpus::REPORTED {
+            let diagnostics = run_with_boundary_attributes(source, boundary::corpus::ATTRIBUTES);
+
+            assert!(
+                !diagnostics.is_empty(),
+                "should report a signature on no boundary: {source}"
+            );
+        }
+    }
+
     #[test]
     fn bool_local_variable_not_flagged() {
         let diagnostics = run("fn foo() { let x: bool = true; }");

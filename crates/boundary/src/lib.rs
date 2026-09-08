@@ -9,6 +9,8 @@
 
 use whisker_types::DecoratedNode;
 
+pub mod corpus;
+
 /// The option both rules read to learn which attributes mark a boundary
 ///
 /// The rules read it under their own ids, so a project can name different
