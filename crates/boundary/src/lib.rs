@@ -4,8 +4,8 @@
 //! rules act on that: `lint.repeated-primitive-params` and
 //! `lint.bool-param`. Both ask the same question of the same signatures,
 //! under one option a project sets once, so they ask it here. A copy in
-//! each rule that drifted would exempt a function for one rule and report
-//! it for the other, which reads as a bug in whichever rule spoke.
+//! each rule could drift. One rule would then exempt a function the other
+//! reports, which reads as a bug in whichever rule spoke.
 
 use whisker_types::DecoratedNode;
 
@@ -60,11 +60,10 @@ pub fn crosses_a_boundary(node: &DecoratedNode<'_>, attributes: &[String]) -> bo
 
 /// Returns whether an attribute on the signature is one of `attributes`
 ///
-/// An attribute is a sibling that precedes the item, so the walk goes
-/// backwards from the item and stops at the first sibling that is neither an
-/// attribute nor a comment. A doc comment between two attributes therefore
-/// does not end the run, and an attribute on the item before this one does
-/// not reach it.
+/// An attribute is a sibling that precedes the item. The walk goes backwards
+/// and stops at the first sibling that is neither an attribute nor a comment.
+/// A doc comment between two attributes therefore does not end the run, and
+/// an attribute on the item before this one does not reach it.
 ///
 /// A configured name matches the last segment of the attribute's path, so
 /// `shard` covers both `#[shard]` and `#[topcoat::shard]`. They are one
@@ -116,8 +115,8 @@ mod tests {
 
     /// Returns the first signature in `source`, wherever it sits
     ///
-    /// A method in an `impl` block and a declaration in an `extern` block
-    /// are both nested, and the walk has to reach them to test either.
+    /// A method in an `impl` block is nested, and so is a declaration in an
+    /// `extern` block. The walk has to reach both.
     fn signature<'a>(tree: &'a DecoratedTree) -> DecoratedNode<'a> {
         fn find<'a>(node: &DecoratedNode<'a>) -> Option<DecoratedNode<'a>> {
             match node.kind() {
