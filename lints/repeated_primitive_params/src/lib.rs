@@ -13,18 +13,18 @@ const RULE_ID: RuleId = RuleId::new("lint.repeated-primitive-params");
 /// with. Return types and struct fields are not argument positions, so the
 /// rule never looks at them. `bool` belongs to `lint.bool-param`.
 ///
-/// The `foreign-attributes` option names the attribute macros that fix a
-/// signature the way `extern` does. See [`is_foreign`].
+/// The `boundary-attributes` option names the attribute macros that fix a
+/// signature the way `extern` does. See [`crosses_a_boundary`].
 #[derive(Default)]
 pub struct RepeatedPrimitiveParams {
-    foreign_attributes: Vec<String>,
+    boundary_attributes: Vec<String>,
 }
 
 impl RepeatedPrimitiveParams {
     /// Creates a boxed [`LintPass`] suitable for the whisker pipeline
     ///
     /// The pass reads no options. A caller that wants the
-    /// `foreign-attributes` exemption goes through whisker, which
+    /// `boundary-attributes` exemption goes through whisker, which
     /// configures every pass it constructs.
     ///
     /// # Examples
@@ -78,17 +78,17 @@ fn primitive_type_name(node: &DecoratedNode<'_>) -> Option<String> {
     }
 }
 
-/// Returns whether the signature crosses a foreign boundary
+/// Returns whether the signature sits on a boundary that fixes it
 ///
 /// A function in an `extern` block, or one with an `extern` ABI, must match a
-/// signature that a foreign caller fixes. Its parameter types are not a free
-/// choice.
+/// signature that a caller outside Rust fixes. Its parameter types are not a
+/// free choice.
 ///
-/// An attribute macro that generates a bridge for a caller outside Rust does
-/// the same thing, and the rule cannot tell one attribute from another. A
-/// project names those attributes in `foreign-attributes`, and `foreign`
-/// holds what it named.
-fn is_foreign(node: &DecoratedNode<'_>, foreign: &[String]) -> bool {
+/// An attribute macro that generates a bridge for such a caller does the same
+/// thing, and the rule cannot tell one attribute from another. A project names
+/// those attributes in `boundary-attributes`, and `boundary` holds what it
+/// named.
+fn crosses_a_boundary(node: &DecoratedNode<'_>, boundary: &[String]) -> bool {
     let extern_modifier = node.named_children().iter().any(|child| {
         child.kind() == "function_modifiers"
             && child
@@ -96,15 +96,15 @@ fn is_foreign(node: &DecoratedNode<'_>, foreign: &[String]) -> bool {
                 .iter()
                 .any(|modifier| modifier.kind() == "extern_modifier")
     });
-    let foreign_block = node
+    let extern_block = node
         .parent()
         .and_then(|parent| parent.parent())
         .is_some_and(|grandparent| grandparent.kind() == "foreign_mod_item");
 
-    extern_modifier || foreign_block || carries_a_foreign_attribute(node, foreign)
+    extern_modifier || extern_block || carries_a_boundary_attribute(node, boundary)
 }
 
-/// Returns whether an attribute on the signature is one of `foreign`
+/// Returns whether an attribute on the signature is one of `boundary`
 ///
 /// An attribute is a sibling that precedes the item, so the walk goes
 /// backwards from the item and stops at the first sibling that is neither an
@@ -114,8 +114,8 @@ fn is_foreign(node: &DecoratedNode<'_>, foreign: &[String]) -> bool {
 /// A configured name matches the last segment of the attribute's path, so
 /// `shard` covers both `#[shard]` and `#[topcoat::shard]`. They are one
 /// macro, and which one a file writes depends on its imports.
-fn carries_a_foreign_attribute(node: &DecoratedNode<'_>, foreign: &[String]) -> bool {
-    if foreign.is_empty() {
+fn carries_a_boundary_attribute(node: &DecoratedNode<'_>, boundary: &[String]) -> bool {
+    if boundary.is_empty() {
         return false;
     }
 
@@ -144,7 +144,7 @@ fn carries_a_foreign_attribute(node: &DecoratedNode<'_>, foreign: &[String]) -> 
 
         let name = path.text();
         let name = name.rsplit("::").next().unwrap_or(name).trim();
-        if foreign.iter().any(|candidate| candidate == name) {
+        if boundary.iter().any(|candidate| candidate == name) {
             return true;
         }
     }
@@ -165,11 +165,11 @@ fn join_names(names: &[&str]) -> String {
 
 /// Reports every primitive type that the signature uses more than once
 ///
-/// The rule skips a foreign signature. The diagnostic points at the type of
+/// The rule skips a signature on a boundary. The diagnostic points at the type of
 /// the first parameter in the group, so two repeated types give two
 /// diagnostics at two places.
-fn check_signature(node: &DecoratedNode<'_>, foreign: &[String]) -> Vec<Diagnostic> {
-    if is_foreign(node, foreign) {
+fn check_signature(node: &DecoratedNode<'_>, boundary: &[String]) -> Vec<Diagnostic> {
+    if crosses_a_boundary(node, boundary) {
         return Vec::new();
     }
 
@@ -228,18 +228,18 @@ fn check_signature(node: &DecoratedNode<'_>, foreign: &[String]) -> Vec<Diagnost
 
 impl RustLintPass for RepeatedPrimitiveParams {
     fn configure(&mut self, options: &RuleOptions) {
-        self.foreign_attributes = options
-            .names(RULE_ID, "foreign-attributes")
+        self.boundary_attributes = options
+            .names(RULE_ID, "boundary-attributes")
             .unwrap_or_default()
             .to_vec();
     }
 
     fn check_function_item(&mut self, node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
-        check_signature(node, &self.foreign_attributes)
+        check_signature(node, &self.boundary_attributes)
     }
 
     fn check_function_signature_item(&mut self, node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
-        check_signature(node, &self.foreign_attributes)
+        check_signature(node, &self.boundary_attributes)
     }
 }
 
@@ -265,13 +265,13 @@ mod tests {
         execute(&tree, &mut passes)
     }
 
-    /// Runs the rule as whisker runs it, with `foreign-attributes` set
-    fn run_with_foreign_attributes(source: &str, foreign: &[&str]) -> Vec<Diagnostic> {
+    /// Runs the rule as whisker runs it, with `boundary-attributes` set
+    fn run_with_boundary_attributes(source: &str, boundary: &[&str]) -> Vec<Diagnostic> {
         let tree = parse(source, Language::Rust);
         let options = RuleOptions::new(vec![RuleOption::new(
             RULE_ID.as_str().to_owned(),
-            "foreign-attributes".to_owned(),
-            foreign.iter().map(|name| (*name).to_owned()).collect(),
+            "boundary-attributes".to_owned(),
+            boundary.iter().map(|name| (*name).to_owned()).collect(),
         )]);
 
         let mut pass = RepeatedPrimitiveParams::into_lint_pass();
@@ -291,14 +291,14 @@ mod tests {
     #[test]
     fn check_signature_with_a_configured_attribute_reports_nothing() {
         let diagnostics =
-            run_with_foreign_attributes("#[shard]\nfn f(a: String, b: String) {}", &["shard"]);
+            run_with_boundary_attributes("#[shard]\nfn f(a: String, b: String) {}", &["shard"]);
 
         assert_no_diagnostics(&diagnostics);
     }
 
     #[test]
     fn check_signature_with_a_configured_attribute_behind_another_reports_nothing() {
-        let diagnostics = run_with_foreign_attributes(
+        let diagnostics = run_with_boundary_attributes(
             "#[shard]\n/// Doc\n#[inline]\nfn f(a: String, b: String) {}",
             &["shard"],
         );
@@ -308,7 +308,7 @@ mod tests {
 
     #[test]
     fn check_signature_with_a_configured_attribute_written_in_full_reports_nothing() {
-        let diagnostics = run_with_foreign_attributes(
+        let diagnostics = run_with_boundary_attributes(
             "#[topcoat::shard]\nfn f(a: String, b: String) {}",
             &["shard"],
         );
@@ -326,7 +326,7 @@ mod tests {
 
     #[test]
     fn check_signature_with_a_configured_attribute_on_a_method_reports_nothing() {
-        let diagnostics = run_with_foreign_attributes(
+        let diagnostics = run_with_boundary_attributes(
             "impl S {\n    #[shard]\n    fn f(a: String, b: String) {}\n}",
             &["shard"],
         );
@@ -336,7 +336,7 @@ mod tests {
 
     #[test]
     fn check_signature_after_another_signatures_attribute_reports_group() {
-        let diagnostics = run_with_foreign_attributes(
+        let diagnostics = run_with_boundary_attributes(
             "#[shard]\nfn a(x: String, y: String) {}\nfn b(x: String, y: String) {}",
             &["shard"],
         );
@@ -348,7 +348,7 @@ mod tests {
     #[test]
     fn check_signature_with_another_attribute_reports_group() {
         let diagnostics =
-            run_with_foreign_attributes("#[inline]\nfn f(a: String, b: String) {}", &["shard"]);
+            run_with_boundary_attributes("#[inline]\nfn f(a: String, b: String) {}", &["shard"]);
 
         assert_eq!(diagnostics.len(), 1);
         assert_diagnostic(&diagnostics[0]).message_contains("share type `String`");
@@ -362,7 +362,7 @@ mod tests {
     }
 
     #[test]
-    fn check_signature_with_foreign_block_reports_nothing() {
+    fn check_signature_with_extern_block_reports_nothing() {
         let diagnostics = run("unsafe extern \"C\" { fn f(a: usize, b: usize); }");
 
         assert_no_diagnostics(&diagnostics);

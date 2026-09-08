@@ -10,20 +10,20 @@ const RULE_ID: RuleId = RuleId::new("lint.bool-param");
 /// models. An enum with meaningful variant names makes the code
 /// self-documenting and prevents accidental transposition of arguments.
 ///
-/// The `foreign-attributes` option names the attribute macros that fix a
+/// The `boundary-attributes` option names the attribute macros that fix a
 /// signature, and the rule skips a function that carries one. It is the same
 /// option `lint.repeated-primitive-params` reads, and it means the same
 /// thing; a project that sets one usually sets both.
 #[derive(Default)]
 pub struct BoolParam {
-    foreign_attributes: Vec<String>,
+    boundary_attributes: Vec<String>,
 }
 
 impl BoolParam {
     /// Creates a boxed [`LintPass`] suitable for the whisker pipeline
     ///
     /// The pass reads no options. A caller that wants the
-    /// `foreign-attributes` exemption goes through whisker, which configures
+    /// `boundary-attributes` exemption goes through whisker, which configures
     /// every pass it constructs.
     ///
     /// # Examples
@@ -41,7 +41,7 @@ fn is_bool_type(node: &DecoratedNode<'_>) -> bool {
     node.kind() == "primitive_type" && node.text() == "bool"
 }
 
-/// Returns whether an attribute on the signature is one of `foreign`
+/// Returns whether an attribute on the signature is one of `boundary`
 ///
 /// An attribute is a sibling that precedes the item, so the walk goes
 /// backwards from the item and stops at the first sibling that is neither an
@@ -51,8 +51,8 @@ fn is_bool_type(node: &DecoratedNode<'_>) -> bool {
 /// A configured name matches the last segment of the attribute's path, so
 /// `shard` covers both `#[shard]` and `#[topcoat::shard]`. They are one
 /// macro, and which one a file writes depends on its imports.
-fn carries_a_foreign_attribute(node: &DecoratedNode<'_>, foreign: &[String]) -> bool {
-    if foreign.is_empty() {
+fn carries_a_boundary_attribute(node: &DecoratedNode<'_>, boundary: &[String]) -> bool {
+    if boundary.is_empty() {
         return false;
     }
 
@@ -81,7 +81,7 @@ fn carries_a_foreign_attribute(node: &DecoratedNode<'_>, foreign: &[String]) -> 
 
         let name = path.text();
         let name = name.rsplit("::").next().unwrap_or(name).trim();
-        if foreign.iter().any(|candidate| candidate == name) {
+        if boundary.iter().any(|candidate| candidate == name) {
             return true;
         }
     }
@@ -91,14 +91,14 @@ fn carries_a_foreign_attribute(node: &DecoratedNode<'_>, foreign: &[String]) -> 
 
 impl RustLintPass for BoolParam {
     fn configure(&mut self, options: &RuleOptions) {
-        self.foreign_attributes = options
-            .names(RULE_ID, "foreign-attributes")
+        self.boundary_attributes = options
+            .names(RULE_ID, "boundary-attributes")
             .unwrap_or_default()
             .to_vec();
     }
 
     fn check_function_item(&mut self, node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
-        if carries_a_foreign_attribute(node, &self.foreign_attributes) {
+        if carries_a_boundary_attribute(node, &self.boundary_attributes) {
             return Vec::new();
         }
 
@@ -179,13 +179,13 @@ mod tests {
         execute(&tree, &mut passes)
     }
 
-    /// Runs the rule as whisker runs it, with `foreign-attributes` set
-    fn run_with_foreign_attributes(source: &str, foreign: &[&str]) -> Vec<Diagnostic> {
+    /// Runs the rule as whisker runs it, with `boundary-attributes` set
+    fn run_with_boundary_attributes(source: &str, boundary: &[&str]) -> Vec<Diagnostic> {
         let tree = parse(source, Language::Rust);
         let options = RuleOptions::new(vec![RuleOption::new(
             RULE_ID.as_str().to_owned(),
-            "foreign-attributes".to_owned(),
-            foreign.iter().map(|name| (*name).to_owned()).collect(),
+            "boundary-attributes".to_owned(),
+            boundary.iter().map(|name| (*name).to_owned()).collect(),
         )]);
 
         let mut pass = adapt();
@@ -215,7 +215,7 @@ mod tests {
 
     #[test]
     fn bool_param_behind_a_configured_attribute_not_flagged() {
-        let diagnostics = run_with_foreign_attributes("#[shard]\nfn foo(x: bool) {}", &["shard"]);
+        let diagnostics = run_with_boundary_attributes("#[shard]\nfn foo(x: bool) {}", &["shard"]);
 
         assert_no_diagnostics(&diagnostics);
     }
@@ -223,7 +223,7 @@ mod tests {
     #[test]
     fn bool_param_behind_a_configured_attribute_written_in_full_not_flagged() {
         let diagnostics =
-            run_with_foreign_attributes("#[topcoat::shard]\nfn foo(x: bool) {}", &["shard"]);
+            run_with_boundary_attributes("#[topcoat::shard]\nfn foo(x: bool) {}", &["shard"]);
 
         assert_no_diagnostics(&diagnostics);
     }
@@ -238,7 +238,7 @@ mod tests {
 
     #[test]
     fn bool_param_behind_another_attribute_flagged() {
-        let diagnostics = run_with_foreign_attributes("#[inline]\nfn foo(x: bool) {}", &["shard"]);
+        let diagnostics = run_with_boundary_attributes("#[inline]\nfn foo(x: bool) {}", &["shard"]);
 
         assert_eq!(diagnostics.len(), 1);
         assert_diagnostic(&diagnostics[0]).message_contains("parameter has type `bool`");
@@ -247,7 +247,7 @@ mod tests {
     #[test]
     fn bool_struct_field_behind_a_configured_attribute_flagged() {
         let diagnostics =
-            run_with_foreign_attributes("#[shard]\nstruct Config { verbose: bool }", &["shard"]);
+            run_with_boundary_attributes("#[shard]\nstruct Config { verbose: bool }", &["shard"]);
 
         assert_eq!(diagnostics.len(), 1);
         assert_diagnostic(&diagnostics[0]).message_contains("struct field has type `bool`");

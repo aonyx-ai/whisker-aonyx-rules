@@ -31,11 +31,11 @@ them under the rule that reads them:
 
 ```toml
 [rules.options."lint.repeated-primitive-params"]
-foreign-attributes = ["shard", "procedure"]
+boundary-attributes = ["shard", "procedure"]
 ```
 
 `lint.repeated-primitive-params` and `lint.bool-param` both read
-`foreign-attributes`. It names the attribute macros that generate a bridge
+`boundary-attributes`. It names the attribute macros that generate a bridge
 for a caller outside Rust, such as topcoat's `#[shard]` and `#[procedure]`.
 Such a macro fixes a signature the way `extern` does, so the rule skips the
 function rather than asking for types the caller cannot send. A project that
