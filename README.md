@@ -37,9 +37,14 @@ boundary-attributes = ["shard", "procedure"]
 `lint.repeated-primitive-params` and `lint.bool-param` both read
 `boundary-attributes`. It names the attribute macros that generate a bridge
 for a caller outside Rust, such as topcoat's `#[shard]` and `#[procedure]`.
-Such a macro fixes a signature the way `extern` does, so the rule skips the
-function rather than asking for types the caller cannot send. A project that
+Such a macro fixes a signature the way `extern` does, so both rules skip the
+function rather than ask for types the caller cannot send. A project that
 sets one usually sets both.
+
+Both rules already skip an `extern` signature, with no option set. They
+answer this question in one place, `crates/boundary`, because a rule that
+exempted a function the other reported would read as a bug in whichever one
+spoke.
 
 ## Pinning
 

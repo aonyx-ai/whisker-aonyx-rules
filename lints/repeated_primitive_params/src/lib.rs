@@ -14,7 +14,7 @@ const RULE_ID: RuleId = RuleId::new("lint.repeated-primitive-params");
 /// rule never looks at them. `bool` belongs to `lint.bool-param`.
 ///
 /// The `boundary-attributes` option names the attribute macros that fix a
-/// signature the way `extern` does. See [`crosses_a_boundary`].
+/// signature the way `extern` does. See [`boundary::crosses_a_boundary`].
 #[derive(Default)]
 pub struct RepeatedPrimitiveParams {
     boundary_attributes: Vec<String>,
@@ -23,9 +23,11 @@ pub struct RepeatedPrimitiveParams {
 impl RepeatedPrimitiveParams {
     /// Creates a boxed [`LintPass`] suitable for the whisker pipeline
     ///
-    /// The pass reads no options. A caller that wants the
-    /// `boundary-attributes` exemption goes through whisker, which
-    /// configures every pass it constructs.
+    /// The pass starts with no boundary attributes, so it reports every
+    /// signature that `extern` does not already excuse. Whisker calls
+    /// `configure` on each pass it constructs; a caller that builds one
+    /// directly and wants the `boundary-attributes` exemption has to call
+    /// it too.
     ///
     /// # Examples
     ///
@@ -78,80 +80,6 @@ fn primitive_type_name(node: &DecoratedNode<'_>) -> Option<String> {
     }
 }
 
-/// Returns whether the signature sits on a boundary that fixes it
-///
-/// A function in an `extern` block, or one with an `extern` ABI, must match a
-/// signature that a caller outside Rust fixes. Its parameter types are not a
-/// free choice.
-///
-/// An attribute macro that generates a bridge for such a caller does the same
-/// thing, and the rule cannot tell one attribute from another. A project names
-/// those attributes in `boundary-attributes`, and `boundary` holds what it
-/// named.
-fn crosses_a_boundary(node: &DecoratedNode<'_>, boundary: &[String]) -> bool {
-    let extern_modifier = node.named_children().iter().any(|child| {
-        child.kind() == "function_modifiers"
-            && child
-                .named_children()
-                .iter()
-                .any(|modifier| modifier.kind() == "extern_modifier")
-    });
-    let extern_block = node
-        .parent()
-        .and_then(|parent| parent.parent())
-        .is_some_and(|grandparent| grandparent.kind() == "foreign_mod_item");
-
-    extern_modifier || extern_block || carries_a_boundary_attribute(node, boundary)
-}
-
-/// Returns whether an attribute on the signature is one of `boundary`
-///
-/// An attribute is a sibling that precedes the item, so the walk goes
-/// backwards from the item and stops at the first sibling that is neither an
-/// attribute nor a comment. A doc comment between two attributes therefore
-/// does not end the run.
-///
-/// A configured name matches the last segment of the attribute's path, so
-/// `shard` covers both `#[shard]` and `#[topcoat::shard]`. They are one
-/// macro, and which one a file writes depends on its imports.
-fn carries_a_boundary_attribute(node: &DecoratedNode<'_>, boundary: &[String]) -> bool {
-    if boundary.is_empty() {
-        return false;
-    }
-
-    let Some(parent) = node.parent() else {
-        return false;
-    };
-    let siblings = parent.named_children();
-    let Some(position) = siblings
-        .iter()
-        .position(|sibling| sibling.id() == node.id())
-    else {
-        return false;
-    };
-
-    for sibling in siblings[..position].iter().rev() {
-        let attribute = match sibling.kind() {
-            "attribute_item" => sibling.named_child(0),
-            "line_comment" => continue,
-            "block_comment" => continue,
-            _ => return false,
-        };
-        let Some(attribute) = attribute else { continue };
-        let Some(path) = attribute.named_child(0) else {
-            continue;
-        };
-
-        let name = path.text();
-        let name = name.rsplit("::").next().unwrap_or(name).trim();
-        if boundary.iter().any(|candidate| candidate == name) {
-            return true;
-        }
-    }
-
-    false
-}
-
 /// Joins parameter names into an English list, each name in backticks
 fn join_names(names: &[&str]) -> String {
     let names: Vec<String> = names.iter().map(|name| format!("`{name}`")).collect();
@@ -169,7 +97,7 @@ fn join_names(names: &[&str]) -> String {
 /// the first parameter in the group, so two repeated types give two
 /// diagnostics at two places.
 fn check_signature(node: &DecoratedNode<'_>, boundary: &[String]) -> Vec<Diagnostic> {
-    if crosses_a_boundary(node, boundary) {
+    if boundary::crosses_a_boundary(node, boundary) {
         return Vec::new();
     }
 
@@ -229,7 +157,7 @@ fn check_signature(node: &DecoratedNode<'_>, boundary: &[String]) -> Vec<Diagnos
 impl RustLintPass for RepeatedPrimitiveParams {
     fn configure(&mut self, options: &RuleOptions) {
         self.boundary_attributes = options
-            .names(RULE_ID, "boundary-attributes")
+            .names(RULE_ID, boundary::OPTION)
             .unwrap_or_default()
             .to_vec();
     }

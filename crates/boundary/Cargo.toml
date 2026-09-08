@@ -1,0 +1,23 @@
+# Two rules answer the same question about a signature, and they have to
+# answer it the same way. The reasoning lives here rather than in each rule,
+# because a copy that drifts makes one rule exempt a function the other
+# reports, under one option that a project set once.
+#
+# This crate is an rlib and exports no plugin declaration, so the build
+# produces no dynamic library for whisker to load.
+[package]
+name = "boundary"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+whisker-types = { workspace = true }
+
+[dev-dependencies]
+whisker-testing = { workspace = true }
+
+[lints]
+workspace = true

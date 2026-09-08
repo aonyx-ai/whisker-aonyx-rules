@@ -5,7 +5,10 @@
 # and `rust-toolchain.toml` move together, and why a mismatch is a loud
 # refusal rather than a subtle wrong answer.
 [workspace]
-members = ["lints/*"]
+# `lints/*` are the rules themselves, each a cdylib whisker loads.
+# `crates/*` hold what more than one rule needs, as ordinary rlibs that
+# produce no library for whisker to find.
+members = ["crates/*", "lints/*"]
 
 # Opt-in to the new feature resolver introduced in Rust 1.85 and Edition 2024.
 # https://doc.rust-lang.org/cargo/reference/resolver.html#resolver-versions
@@ -23,6 +26,7 @@ missing_errors_doc = "warn"
 missing_panics_doc = "warn"
 
 [workspace.dependencies]
+boundary = { path = "crates/boundary" }
 proptest = "1"
 # `DecoratedNode::raw()` returns a `tree_sitter::Node`, which some rules name
 # directly. The version matches whisker's own so that the plugin and the host

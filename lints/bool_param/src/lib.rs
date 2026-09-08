@@ -10,10 +10,14 @@ const RULE_ID: RuleId = RuleId::new("lint.bool-param");
 /// models. An enum with meaningful variant names makes the code
 /// self-documenting and prevents accidental transposition of arguments.
 ///
-/// The `boundary-attributes` option names the attribute macros that fix a
-/// signature, and the rule skips a function that carries one. It is the same
-/// option `lint.repeated-primitive-params` reads, and it means the same
-/// thing; a project that sets one usually sets both.
+/// The rule skips a signature that sits on a boundary, because a caller
+/// outside Rust fixes it: an `extern` ABI, an `extern` block, or an
+/// attribute macro the project named in `boundary-attributes`. It is the
+/// same option `lint.repeated-primitive-params` reads, and it means the
+/// same thing; a project that sets one usually sets both.
+///
+/// A struct is not a signature, so a `bool` field is reported whatever the
+/// struct carries.
 #[derive(Default)]
 pub struct BoolParam {
     boundary_attributes: Vec<String>,
@@ -22,9 +26,11 @@ pub struct BoolParam {
 impl BoolParam {
     /// Creates a boxed [`LintPass`] suitable for the whisker pipeline
     ///
-    /// The pass reads no options. A caller that wants the
-    /// `boundary-attributes` exemption goes through whisker, which configures
-    /// every pass it constructs.
+    /// The pass starts with no boundary attributes, so it reports every
+    /// signature that `extern` does not already excuse. Whisker calls
+    /// `configure` on each pass it constructs; a caller that builds one
+    /// directly and wants the `boundary-attributes` exemption has to call
+    /// it too.
     ///
     /// # Examples
     ///
@@ -41,64 +47,16 @@ fn is_bool_type(node: &DecoratedNode<'_>) -> bool {
     node.kind() == "primitive_type" && node.text() == "bool"
 }
 
-/// Returns whether an attribute on the signature is one of `boundary`
-///
-/// An attribute is a sibling that precedes the item, so the walk goes
-/// backwards from the item and stops at the first sibling that is neither an
-/// attribute nor a comment. A doc comment between two attributes therefore
-/// does not end the run.
-///
-/// A configured name matches the last segment of the attribute's path, so
-/// `shard` covers both `#[shard]` and `#[topcoat::shard]`. They are one
-/// macro, and which one a file writes depends on its imports.
-fn carries_a_boundary_attribute(node: &DecoratedNode<'_>, boundary: &[String]) -> bool {
-    if boundary.is_empty() {
-        return false;
-    }
-
-    let Some(parent) = node.parent() else {
-        return false;
-    };
-    let siblings = parent.named_children();
-    let Some(position) = siblings
-        .iter()
-        .position(|sibling| sibling.id() == node.id())
-    else {
-        return false;
-    };
-
-    for sibling in siblings[..position].iter().rev() {
-        let attribute = match sibling.kind() {
-            "attribute_item" => sibling.named_child(0),
-            "line_comment" => continue,
-            "block_comment" => continue,
-            _ => return false,
-        };
-        let Some(attribute) = attribute else { continue };
-        let Some(path) = attribute.named_child(0) else {
-            continue;
-        };
-
-        let name = path.text();
-        let name = name.rsplit("::").next().unwrap_or(name).trim();
-        if boundary.iter().any(|candidate| candidate == name) {
-            return true;
-        }
-    }
-
-    false
-}
-
 impl RustLintPass for BoolParam {
     fn configure(&mut self, options: &RuleOptions) {
         self.boundary_attributes = options
-            .names(RULE_ID, "boundary-attributes")
+            .names(RULE_ID, boundary::OPTION)
             .unwrap_or_default()
             .to_vec();
     }
 
     fn check_function_item(&mut self, node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
-        if carries_a_boundary_attribute(node, &self.boundary_attributes) {
+        if boundary::crosses_a_boundary(node, &self.boundary_attributes) {
             return Vec::new();
         }
 
@@ -211,6 +169,20 @@ mod tests {
             .has_rule_id("lint.bool-param")
             .has_severity(Severity::Warn)
             .message_contains("parameter has type `bool`");
+    }
+
+    #[test]
+    fn bool_param_in_an_extern_block_not_flagged() {
+        let diagnostics = run("unsafe extern \"C\" { fn f(x: bool); }");
+
+        assert_no_diagnostics(&diagnostics);
+    }
+
+    #[test]
+    fn bool_param_in_an_extern_function_not_flagged() {
+        let diagnostics = run("pub extern \"C\" fn foo(x: bool) {}");
+
+        assert_no_diagnostics(&diagnostics);
     }
 
     #[test]

@@ -57,7 +57,16 @@ checksum = "b588b76d00fde79687d7646a9b5bdf3cc0f655e0bbd080335a95d7e96f3587da"
 name = "bool_param"
 version = "0.1.0"
 dependencies = [
+ "boundary",
  "whisker-rust",
+ "whisker-testing",
+ "whisker-types",
+]
+
+[[package]]
+name = "boundary"
+version = "0.1.0"
+dependencies = [
  "whisker-testing",
  "whisker-types",
 ]
@@ -446,6 +455,7 @@ dependencies = [
 name = "repeated_primitive_params"
 version = "0.1.0"
 dependencies = [
+ "boundary",
  "whisker-rust",
  "whisker-testing",
  "whisker-types",
