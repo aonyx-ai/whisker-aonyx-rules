@@ -14,9 +14,8 @@
 //! Every source holds one `bool` parameter and two `String` parameters, so
 //! it trips both rules when nothing exempts it. A source that only one rule
 //! looks at would pass for the other by never being visited. That is the
-//! false comfort this module exists to remove. An `extern` block is
-//! therefore absent: `bool_param` visits no `function_signature_item`, so
-//! that case belongs to [`crosses_a_boundary`]'s own tests.
+//! false comfort this module exists to remove, so a source belongs here
+//! only once both rules visit the position it uses.
 //!
 //! [`OPTION`]: crate::OPTION
 //! [`crosses_a_boundary`]: crate::crosses_a_boundary
@@ -43,6 +42,7 @@ pub const ATTRIBUTES: &[&str] = &["shard"];
 /// ```
 pub const EXEMPT: &[&str] = &[
     "pub extern \"C\" fn f(flag: bool, path: String, text: String) {}",
+    "unsafe extern \"C\" {\n    fn f(flag: bool, path: String, text: String);\n}",
     "#[shard]\npub fn f(flag: bool, path: String, text: String) {}",
     "#[topcoat::shard]\npub fn f(flag: bool, path: String, text: String) {}",
     "impl S {\n    #[shard]\n    fn f(flag: bool, path: String, text: String) {}\n}",
@@ -63,6 +63,7 @@ pub const EXEMPT: &[&str] = &[
 /// ```
 pub const REPORTED: &[&str] = &[
     "pub fn f(flag: bool, path: String, text: String) {}",
+    "trait T {\n    fn f(&self, flag: bool, path: String, text: String);\n}",
     "#[inline]\npub fn f(flag: bool, path: String, text: String) {}",
     "#[shard]\nfn a(x: String) {}\nfn b(flag: bool, path: String, text: String) {}",
 ];
