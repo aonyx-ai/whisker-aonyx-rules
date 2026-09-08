@@ -24,6 +24,23 @@ runs the same rules today and next month.
 Each directory under `lints/` is one rule, and each documents itself. The
 rule ids they report under are all `lint.<name>`.
 
+## Options
+
+A rule that reads options says so in its own documentation. A project sets
+them under the rule that reads them:
+
+```toml
+[rules.options."lint.repeated-primitive-params"]
+foreign-attributes = ["shard", "procedure"]
+```
+
+`lint.repeated-primitive-params` and `lint.bool-param` both read
+`foreign-attributes`. It names the attribute macros that generate a bridge
+for a caller outside Rust, such as topcoat's `#[shard]` and `#[procedure]`.
+Such a macro fixes a signature the way `extern` does, so the rule skips the
+function rather than asking for types the caller cannot send. A project that
+sets one usually sets both.
+
 ## Pinning
 
 A rule is a `cdylib` that whisker loads into its own process. Rust has no
