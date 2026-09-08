@@ -672,7 +672,7 @@ dependencies = [
 [[package]]
 name = "whisker-codegen"
 version = "0.1.0"
-source = "git+https://github.com/aonyx-ai/whisker.git?rev=602fd146fcba8fe3c264a9a9ffe04aa13190614a#602fd146fcba8fe3c264a9a9ffe04aa13190614a"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c#1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c"
 dependencies = [
  "serde",
  "serde_json",
@@ -681,7 +681,7 @@ dependencies = [
 [[package]]
 name = "whisker-core"
 version = "0.1.0"
-source = "git+https://github.com/aonyx-ai/whisker.git?rev=602fd146fcba8fe3c264a9a9ffe04aa13190614a#602fd146fcba8fe3c264a9a9ffe04aa13190614a"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c#1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c"
 dependencies = [
  "anyhow",
  "tree-sitter",
@@ -691,7 +691,7 @@ dependencies = [
 [[package]]
 name = "whisker-macros"
 version = "0.1.0"
-source = "git+https://github.com/aonyx-ai/whisker.git?rev=602fd146fcba8fe3c264a9a9ffe04aa13190614a#602fd146fcba8fe3c264a9a9ffe04aa13190614a"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c#1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -701,7 +701,7 @@ dependencies = [
 [[package]]
 name = "whisker-rust"
 version = "0.1.0"
-source = "git+https://github.com/aonyx-ai/whisker.git?rev=602fd146fcba8fe3c264a9a9ffe04aa13190614a#602fd146fcba8fe3c264a9a9ffe04aa13190614a"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c#1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c"
 dependencies = [
  "tree-sitter",
  "tree-sitter-rust",
@@ -713,7 +713,7 @@ dependencies = [
 [[package]]
 name = "whisker-testing"
 version = "0.1.0"
-source = "git+https://github.com/aonyx-ai/whisker.git?rev=602fd146fcba8fe3c264a9a9ffe04aa13190614a#602fd146fcba8fe3c264a9a9ffe04aa13190614a"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c#1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c"
 dependencies = [
  "tree-sitter",
  "tree-sitter-rust",
@@ -724,7 +724,7 @@ dependencies = [
 [[package]]
 name = "whisker-types"
 version = "0.1.0"
-source = "git+https://github.com/aonyx-ai/whisker.git?rev=602fd146fcba8fe3c264a9a9ffe04aa13190614a#602fd146fcba8fe3c264a9a9ffe04aa13190614a"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c#1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c"
 dependencies = [
  "anyhow",
  "rustc_version",

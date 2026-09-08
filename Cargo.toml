@@ -38,11 +38,6 @@ tree-sitter = "0.27"
 # the release beside it says which one. Renovate reads the pair through a
 # custom manager and moves both, the way it moves a pinned action. Bump
 # `rust-toolchain.toml` with them when whisker's does.
-#
-# The pin is a branch commit for now, because `RuleOptions` reaches no
-# release yet. Renovate matches only a pin whose comment names a release,
-# so it leaves these alone until the next one lands and the comment says
-# so again.
-whisker-rust = { git = "https://github.com/aonyx-ai/whisker.git", rev = "602fd146fcba8fe3c264a9a9ffe04aa13190614a", default-features = false } # feat/rule-options
-whisker-testing = { git = "https://github.com/aonyx-ai/whisker.git", rev = "602fd146fcba8fe3c264a9a9ffe04aa13190614a" } # feat/rule-options
-whisker-types = { git = "https://github.com/aonyx-ai/whisker.git", rev = "602fd146fcba8fe3c264a9a9ffe04aa13190614a" } # feat/rule-options
+whisker-rust = { git = "https://github.com/aonyx-ai/whisker.git", rev = "1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c", default-features = false } # v0.1.0-rc.4
+whisker-testing = { git = "https://github.com/aonyx-ai/whisker.git", rev = "1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c" } # v0.1.0-rc.4
+whisker-types = { git = "https://github.com/aonyx-ai/whisker.git", rev = "1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c" } # v0.1.0-rc.4
