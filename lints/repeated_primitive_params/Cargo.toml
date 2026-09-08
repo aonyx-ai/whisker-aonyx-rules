@@ -24,6 +24,8 @@ default = ["plugin"]
 plugin = []
 
 [dependencies]
+# Both rules ask one question about a signature and must answer it alike.
+boundary = { workspace = true }
 whisker-rust = { workspace = true }
 whisker-types = { workspace = true }
 

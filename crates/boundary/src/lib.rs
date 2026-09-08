@@ -1,0 +1,245 @@
+//! Whether a signature sits on a boundary that fixes it
+//!
+//! Whisker's guidance allows a primitive at a system boundary, and two
+//! rules act on that: `lint.repeated-primitive-params` and
+//! `lint.bool-param`. Both ask the same question of the same signatures,
+//! under one option a project sets once, so they ask it here. A copy in
+//! each rule could drift. One rule would then exempt a function the other
+//! reports, which reads as a bug in whichever rule spoke.
+
+use whisker_types::DecoratedNode;
+
+pub mod corpus;
+
+/// The option both rules read to learn which attributes mark a boundary
+///
+/// The rules read it under their own ids, so a project can name different
+/// attributes for each. The name is the same in both, because it means the
+/// same thing.
+///
+/// # Examples
+///
+/// ```
+/// use boundary::OPTION;
+///
+/// assert_eq!(OPTION, "boundary-attributes");
+/// ```
+pub const OPTION: &str = "boundary-attributes";
+
+/// Returns whether the signature at `node` sits on a boundary that fixes it
+///
+/// A function in an `extern` block, or one with an `extern` ABI, must match
+/// a signature that a caller outside Rust fixes. Its parameter types are not
+/// a free choice, so a rule that asks for better types is asking for
+/// something the author cannot give.
+///
+/// An attribute macro that generates a bridge for such a caller does the
+/// same thing, and no rule can know every framework's attribute. A project
+/// names them in [`OPTION`], and `attributes` holds what it named.
+///
+/// # Examples
+///
+/// ```ignore
+/// if crosses_a_boundary(node, &self.boundary_attributes) {
+///     return Vec::new();
+/// }
+/// ```
+pub fn crosses_a_boundary(node: &DecoratedNode<'_>, attributes: &[String]) -> bool {
+    let extern_abi = node.named_children().iter().any(|child| {
+        child.kind() == "function_modifiers"
+            && child
+                .named_children()
+                .iter()
+                .any(|modifier| modifier.kind() == "extern_modifier")
+    });
+    let extern_block = node
+        .parent()
+        .and_then(|parent| parent.parent())
+        .is_some_and(|grandparent| grandparent.kind() == "foreign_mod_item");
+
+    extern_abi || extern_block || carries_a_boundary_attribute(node, attributes)
+}
+
+/// Returns whether an attribute on the signature is one of `attributes`
+///
+/// An attribute is a sibling that precedes the item. The walk goes backwards
+/// and stops at the first sibling that is neither an attribute nor a comment.
+/// A doc comment between two attributes therefore does not end the run, and
+/// an attribute on the item before this one does not reach it.
+///
+/// A configured name matches the last segment of the attribute's path, so
+/// `shard` covers both `#[shard]` and `#[topcoat::shard]`. They are one
+/// macro, and which one a file writes depends on its imports.
+fn carries_a_boundary_attribute(node: &DecoratedNode<'_>, attributes: &[String]) -> bool {
+    if attributes.is_empty() {
+        return false;
+    }
+
+    let Some(parent) = node.parent() else {
+        return false;
+    };
+    let siblings = parent.named_children();
+    let Some(position) = siblings
+        .iter()
+        .position(|sibling| sibling.id() == node.id())
+    else {
+        return false;
+    };
+
+    for sibling in siblings[..position].iter().rev() {
+        let attribute = match sibling.kind() {
+            "attribute_item" => sibling.named_child(0),
+            "line_comment" => continue,
+            "block_comment" => continue,
+            _ => return false,
+        };
+        let Some(attribute) = attribute else { continue };
+        let Some(path) = attribute.named_child(0) else {
+            continue;
+        };
+
+        let name = path.text();
+        let name = name.rsplit("::").next().unwrap_or(name).trim();
+        if attributes.iter().any(|candidate| candidate == name) {
+            return true;
+        }
+    }
+
+    false
+}
+
+#[cfg(test)]
+mod tests {
+    use whisker_testing::parse;
+    use whisker_types::{DecoratedTree, Language};
+
+    use super::*;
+
+    /// Returns the first signature in `source`, wherever it sits
+    ///
+    /// A method in an `impl` block is nested, and so is a declaration in an
+    /// `extern` block. The walk has to reach both.
+    fn signature<'a>(tree: &'a DecoratedTree) -> DecoratedNode<'a> {
+        fn find<'a>(node: &DecoratedNode<'a>) -> Option<DecoratedNode<'a>> {
+            match node.kind() {
+                "function_item" => return Some(node.clone()),
+                "function_signature_item" => return Some(node.clone()),
+                _ => {}
+            }
+
+            for child in node.named_children() {
+                if let Some(found) = find(&child) {
+                    return Some(found);
+                }
+            }
+
+            None
+        }
+
+        find(&tree.root_node()).expect("the source should hold a signature")
+    }
+
+    fn names(values: &[&str]) -> Vec<String> {
+        values.iter().map(|value| (*value).to_owned()).collect()
+    }
+
+    /// Reports whether the first signature in `source` sits on a boundary
+    fn crosses(source: &str, attributes: &[&str]) -> bool {
+        let tree = parse(source, Language::Rust);
+
+        crosses_a_boundary(&signature(&tree), &names(attributes))
+    }
+
+    #[test]
+    fn crosses_a_boundary_with_a_comment_between_attributes_is_true() {
+        let crossed = crosses(
+            "#[shard]\n/// Doc\n#[inline]\nfn f(a: String) {}",
+            &["shard"],
+        );
+
+        assert!(crossed);
+    }
+
+    #[test]
+    fn crosses_a_boundary_with_a_configured_attribute_is_true() {
+        let crossed = crosses("#[shard]\nfn f(a: String) {}", &["shard"]);
+
+        assert!(crossed);
+    }
+
+    #[test]
+    fn crosses_a_boundary_with_a_method_attribute_is_true() {
+        let crossed = crosses(
+            "impl S {\n    #[shard]\n    fn f(a: String) {}\n}",
+            &["shard"],
+        );
+
+        assert!(crossed);
+    }
+
+    #[test]
+    fn crosses_a_boundary_with_a_pathed_attribute_is_true() {
+        let crossed = crosses("#[topcoat::shard]\nfn f(a: String) {}", &["shard"]);
+
+        assert!(crossed);
+    }
+
+    #[test]
+    fn crosses_a_boundary_with_an_extern_abi_is_true() {
+        let crossed = crosses("pub extern \"C\" fn f(a: usize) {}", &[]);
+
+        assert!(crossed);
+    }
+
+    #[test]
+    fn crosses_a_boundary_with_an_extern_block_is_true() {
+        let crossed = crosses("unsafe extern \"C\" { fn f(a: usize); }", &[]);
+
+        assert!(crossed);
+    }
+
+    #[test]
+    fn crosses_a_boundary_with_another_attribute_is_false() {
+        let crossed = crosses("#[inline]\nfn f(a: String) {}", &["shard"]);
+
+        assert!(!crossed);
+    }
+
+    #[test]
+    fn crosses_a_boundary_with_no_attribute_configured_is_false() {
+        let crossed = crosses("#[shard]\nfn f(a: String) {}", &[]);
+
+        assert!(!crossed);
+    }
+
+    #[test]
+    fn crosses_a_boundary_with_the_attribute_on_the_item_before_is_false() {
+        let source = "#[shard]\nfn a(x: String) {}\nfn b(y: String) {}";
+        let tree = parse(source, Language::Rust);
+        let second = tree
+            .root_node()
+            .named_children()
+            .into_iter()
+            .filter(|node| node.kind() == "function_item")
+            .nth(1)
+            .expect("the source should hold two functions");
+
+        let crossed = crosses_a_boundary(&second, &names(&["shard"]));
+
+        assert!(!crossed);
+    }
+
+    #[test]
+    fn crosses_a_boundary_without_an_attribute_is_false() {
+        let crossed = crosses("fn f(a: String) {}", &["shard"]);
+
+        assert!(!crossed);
+    }
+
+    #[test]
+    fn option_names_the_shared_option() {
+        let option = OPTION;
+
+        assert_eq!(option, "boundary-attributes");
+    }
+}

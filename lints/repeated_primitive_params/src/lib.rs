@@ -1,5 +1,5 @@
 use whisker_rust::{RustLintPass, RustLintPassAdapter};
-use whisker_types::{DecoratedNode, Diagnostic, LintPass, RuleId, Severity};
+use whisker_types::{DecoratedNode, Diagnostic, LintPass, RuleId, RuleOptions, Severity};
 
 const RULE_ID: RuleId = RuleId::new("lint.repeated-primitive-params");
 
@@ -12,10 +12,22 @@ const RULE_ID: RuleId = RuleId::new("lint.repeated-primitive-params");
 /// A lone primitive parameter is safe, because it has no sibling to swap
 /// with. Return types and struct fields are not argument positions, so the
 /// rule never looks at them. `bool` belongs to `lint.bool-param`.
-pub struct RepeatedPrimitiveParams;
+///
+/// The `boundary-attributes` option names the attribute macros that fix a
+/// signature the way `extern` does. See [`boundary::crosses_a_boundary`].
+#[derive(Default)]
+pub struct RepeatedPrimitiveParams {
+    boundary_attributes: Vec<String>,
+}
 
 impl RepeatedPrimitiveParams {
     /// Creates a boxed [`LintPass`] suitable for the whisker pipeline
+    ///
+    /// The pass starts with no boundary attributes, so it reports every
+    /// signature that `extern` does not already excuse. Whisker calls
+    /// `configure` on each pass it constructs; a caller that builds one
+    /// directly and wants the `boundary-attributes` exemption has to call
+    /// it too.
     ///
     /// # Examples
     ///
@@ -23,7 +35,7 @@ impl RepeatedPrimitiveParams {
     /// let pass = RepeatedPrimitiveParams::into_lint_pass();
     /// ```
     pub fn into_lint_pass() -> Box<dyn LintPass> {
-        Box::new(RustLintPassAdapter::new(Self))
+        Box::new(RustLintPassAdapter::new(Self::default()))
     }
 }
 
@@ -68,27 +80,6 @@ fn primitive_type_name(node: &DecoratedNode<'_>) -> Option<String> {
     }
 }
 
-/// Returns whether the signature crosses a foreign ABI boundary
-///
-/// A function in an `extern` block, or one with an `extern` ABI, must match a
-/// signature that a foreign caller fixes. Its parameter types are not a free
-/// choice.
-fn is_foreign(node: &DecoratedNode<'_>) -> bool {
-    let extern_modifier = node.named_children().iter().any(|child| {
-        child.kind() == "function_modifiers"
-            && child
-                .named_children()
-                .iter()
-                .any(|modifier| modifier.kind() == "extern_modifier")
-    });
-    let foreign_block = node
-        .parent()
-        .and_then(|parent| parent.parent())
-        .is_some_and(|grandparent| grandparent.kind() == "foreign_mod_item");
-
-    extern_modifier || foreign_block
-}
-
 /// Joins parameter names into an English list, each name in backticks
 fn join_names(names: &[&str]) -> String {
     let names: Vec<String> = names.iter().map(|name| format!("`{name}`")).collect();
@@ -102,11 +93,11 @@ fn join_names(names: &[&str]) -> String {
 
 /// Reports every primitive type that the signature uses more than once
 ///
-/// The rule skips a foreign signature. The diagnostic points at the type of
+/// The rule skips a signature on a boundary. The diagnostic points at the type of
 /// the first parameter in the group, so two repeated types give two
 /// diagnostics at two places.
-fn check_signature(node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
-    if is_foreign(node) {
+fn check_signature(node: &DecoratedNode<'_>, boundary: &[String]) -> Vec<Diagnostic> {
+    if boundary::crosses_a_boundary(node, boundary) {
         return Vec::new();
     }
 
@@ -164,12 +155,19 @@ fn check_signature(node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
 }
 
 impl RustLintPass for RepeatedPrimitiveParams {
+    fn configure(&mut self, options: &RuleOptions) {
+        self.boundary_attributes = options
+            .names(RULE_ID, boundary::OPTION)
+            .unwrap_or_default()
+            .to_vec();
+    }
+
     fn check_function_item(&mut self, node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
-        check_signature(node)
+        check_signature(node, &self.boundary_attributes)
     }
 
     fn check_function_signature_item(&mut self, node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
-        check_signature(node)
+        check_signature(node, &self.boundary_attributes)
     }
 }
 
@@ -180,18 +178,34 @@ impl whisker_rust::DeclaresRules for RepeatedPrimitiveParams {
     }
 }
 
-whisker_rust::export_lints![RepeatedPrimitiveParams];
+whisker_rust::export_lints![RepeatedPrimitiveParams::default()];
 
 #[cfg(test)]
 mod tests {
     use whisker_testing::{assert_diagnostic, assert_no_diagnostics, execute, parse};
-    use whisker_types::{Language, Severity};
+    use whisker_types::{Language, RuleOption, Severity};
 
     use super::*;
 
     fn run(source: &str) -> Vec<Diagnostic> {
         let tree = parse(source, Language::Rust);
         let mut passes = vec![RepeatedPrimitiveParams::into_lint_pass()];
+        execute(&tree, &mut passes)
+    }
+
+    /// Runs the rule as whisker runs it, with `boundary-attributes` set
+    fn run_with_boundary_attributes(source: &str, boundary: &[&str]) -> Vec<Diagnostic> {
+        let tree = parse(source, Language::Rust);
+        let options = RuleOptions::new(vec![RuleOption::new(
+            RULE_ID.as_str().to_owned(),
+            "boundary-attributes".to_owned(),
+            boundary.iter().map(|name| (*name).to_owned()).collect(),
+        )]);
+
+        let mut pass = RepeatedPrimitiveParams::into_lint_pass();
+        pass.configure(&options);
+        let mut passes = vec![pass];
+
         execute(&tree, &mut passes)
     }
 
@@ -202,6 +216,106 @@ mod tests {
         assert_no_diagnostics(&diagnostics);
     }
 
+    /// Pins that this rule ignores every signature the shared corpus holds
+    ///
+    /// The corpus is what stops two rules reading one option from drifting
+    /// apart. `bool_param` once reported an `extern` signature that
+    /// `repeated_primitive_params` skipped, and no test failed, because
+    /// only one of them had `extern` cases.
+    #[test]
+    fn every_boundary_in_the_shared_corpus_reports_nothing() {
+        for source in boundary::corpus::EXEMPT {
+            let diagnostics = run_with_boundary_attributes(source, boundary::corpus::ATTRIBUTES);
+
+            assert!(
+                diagnostics.is_empty(),
+                "should report nothing for a boundary: {source}"
+            );
+        }
+    }
+
+    /// Pins that this rule still reports what the corpus says it must
+    ///
+    /// A rule that exempts too much reports nothing, which reads exactly
+    /// like a rule that found no fault.
+    #[test]
+    fn every_signature_off_the_boundary_in_the_shared_corpus_reports() {
+        for source in boundary::corpus::REPORTED {
+            let diagnostics = run_with_boundary_attributes(source, boundary::corpus::ATTRIBUTES);
+
+            assert!(
+                !diagnostics.is_empty(),
+                "should report a signature on no boundary: {source}"
+            );
+        }
+    }
+
+    #[test]
+    fn check_signature_with_a_configured_attribute_reports_nothing() {
+        let diagnostics =
+            run_with_boundary_attributes("#[shard]\nfn f(a: String, b: String) {}", &["shard"]);
+
+        assert_no_diagnostics(&diagnostics);
+    }
+
+    #[test]
+    fn check_signature_with_a_configured_attribute_behind_another_reports_nothing() {
+        let diagnostics = run_with_boundary_attributes(
+            "#[shard]\n/// Doc\n#[inline]\nfn f(a: String, b: String) {}",
+            &["shard"],
+        );
+
+        assert_no_diagnostics(&diagnostics);
+    }
+
+    #[test]
+    fn check_signature_with_a_configured_attribute_written_in_full_reports_nothing() {
+        let diagnostics = run_with_boundary_attributes(
+            "#[topcoat::shard]\nfn f(a: String, b: String) {}",
+            &["shard"],
+        );
+
+        assert_no_diagnostics(&diagnostics);
+    }
+
+    #[test]
+    fn check_signature_with_an_attribute_nobody_configured_reports_group() {
+        let diagnostics = run("#[shard]\nfn f(a: String, b: String) {}");
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_diagnostic(&diagnostics[0]).message_contains("share type `String`");
+    }
+
+    #[test]
+    fn check_signature_with_a_configured_attribute_on_a_method_reports_nothing() {
+        let diagnostics = run_with_boundary_attributes(
+            "impl S {\n    #[shard]\n    fn f(a: String, b: String) {}\n}",
+            &["shard"],
+        );
+
+        assert_no_diagnostics(&diagnostics);
+    }
+
+    #[test]
+    fn check_signature_after_another_signatures_attribute_reports_group() {
+        let diagnostics = run_with_boundary_attributes(
+            "#[shard]\nfn a(x: String, y: String) {}\nfn b(x: String, y: String) {}",
+            &["shard"],
+        );
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_diagnostic(&diagnostics[0]).message_contains("share type `String`");
+    }
+
+    #[test]
+    fn check_signature_with_another_attribute_reports_group() {
+        let diagnostics =
+            run_with_boundary_attributes("#[inline]\nfn f(a: String, b: String) {}", &["shard"]);
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_diagnostic(&diagnostics[0]).message_contains("share type `String`");
+    }
+
     #[test]
     fn check_signature_with_extern_function_reports_nothing() {
         let diagnostics = run("pub extern \"C\" fn f(a: usize, b: usize) {}");
@@ -210,7 +324,7 @@ mod tests {
     }
 
     #[test]
-    fn check_signature_with_foreign_block_reports_nothing() {
+    fn check_signature_with_extern_block_reports_nothing() {
         let diagnostics = run("unsafe extern \"C\" { fn f(a: usize, b: usize); }");
 
         assert_no_diagnostics(&diagnostics);

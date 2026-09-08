@@ -1,5 +1,5 @@
 use whisker_rust::{RustLintPass, RustLintPassAdapter};
-use whisker_types::{DecoratedNode, Diagnostic, LintPass, RuleId, Severity};
+use whisker_types::{DecoratedNode, Diagnostic, LintPass, RuleId, RuleOptions, Severity};
 
 const RULE_ID: RuleId = RuleId::new("lint.bool-param");
 
@@ -9,10 +9,28 @@ const RULE_ID: RuleId = RuleId::new("lint.bool-param");
 /// Boolean parameters and fields obscure intent at call sites and in data
 /// models. An enum with meaningful variant names makes the code
 /// self-documenting and prevents accidental transposition of arguments.
-pub struct BoolParam;
+///
+/// The rule skips a signature that sits on a boundary, because a caller
+/// outside Rust fixes it: an `extern` ABI, an `extern` block, or an
+/// attribute macro the project named in `boundary-attributes`. It is the
+/// same option `lint.repeated-primitive-params` reads, and it means the
+/// same thing; a project that sets one usually sets both.
+///
+/// A struct is not a signature, so a `bool` field is reported whatever the
+/// struct carries.
+#[derive(Default)]
+pub struct BoolParam {
+    boundary_attributes: Vec<String>,
+}
 
 impl BoolParam {
     /// Creates a boxed [`LintPass`] suitable for the whisker pipeline
+    ///
+    /// The pass starts with no boundary attributes, so it reports every
+    /// signature that `extern` does not already excuse. Whisker calls
+    /// `configure` on each pass it constructs; a caller that builds one
+    /// directly and wants the `boundary-attributes` exemption has to call
+    /// it too.
     ///
     /// # Examples
     ///
@@ -20,7 +38,7 @@ impl BoolParam {
     /// let pass = BoolParam::into_lint_pass();
     /// ```
     pub fn into_lint_pass() -> Box<dyn LintPass> {
-        Box::new(RustLintPassAdapter::new(Self))
+        Box::new(RustLintPassAdapter::new(Self::default()))
     }
 }
 
@@ -30,7 +48,18 @@ fn is_bool_type(node: &DecoratedNode<'_>) -> bool {
 }
 
 impl RustLintPass for BoolParam {
+    fn configure(&mut self, options: &RuleOptions) {
+        self.boundary_attributes = options
+            .names(RULE_ID, boundary::OPTION)
+            .unwrap_or_default()
+            .to_vec();
+    }
+
     fn check_function_item(&mut self, node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
+        if boundary::crosses_a_boundary(node, &self.boundary_attributes) {
+            return Vec::new();
+        }
+
         let Some(parameters) = node.child_by_field_name("parameters") else {
             return Vec::new();
         };
@@ -89,12 +118,12 @@ impl whisker_rust::DeclaresRules for BoolParam {
     }
 }
 
-whisker_rust::export_lints![BoolParam];
+whisker_rust::export_lints![BoolParam::default()];
 
 #[cfg(test)]
 mod tests {
     use whisker_testing::{assert_diagnostic, assert_no_diagnostics, execute, parse};
-    use whisker_types::{Language, LintPass, Severity};
+    use whisker_types::{Language, LintPass, RuleOption, Severity};
 
     use super::*;
 
@@ -106,6 +135,56 @@ mod tests {
         let tree = parse(source, Language::Rust);
         let mut passes = vec![adapt()];
         execute(&tree, &mut passes)
+    }
+
+    /// Runs the rule as whisker runs it, with `boundary-attributes` set
+    fn run_with_boundary_attributes(source: &str, boundary: &[&str]) -> Vec<Diagnostic> {
+        let tree = parse(source, Language::Rust);
+        let options = RuleOptions::new(vec![RuleOption::new(
+            RULE_ID.as_str().to_owned(),
+            "boundary-attributes".to_owned(),
+            boundary.iter().map(|name| (*name).to_owned()).collect(),
+        )]);
+
+        let mut pass = adapt();
+        pass.configure(&options);
+        let mut passes = vec![pass];
+
+        execute(&tree, &mut passes)
+    }
+
+    /// Pins that this rule ignores every signature the shared corpus holds
+    ///
+    /// The corpus is what stops two rules reading one option from drifting
+    /// apart. `bool_param` once reported an `extern` signature that
+    /// `repeated_primitive_params` skipped, and no test failed, because
+    /// only one of them had `extern` cases.
+    #[test]
+    fn every_boundary_in_the_shared_corpus_reports_nothing() {
+        for source in boundary::corpus::EXEMPT {
+            let diagnostics = run_with_boundary_attributes(source, boundary::corpus::ATTRIBUTES);
+
+            assert!(
+                diagnostics.is_empty(),
+                "should report nothing for a boundary: {source}"
+            );
+        }
+    }
+
+    /// Pins that this rule still reports what the corpus says it must
+    ///
+    /// A rule that exempts too much reports nothing, which reads exactly
+    /// like a rule that found no fault.
+    #[test]
+    fn every_signature_off_the_boundary_in_the_shared_corpus_reports() {
+        for source in boundary::corpus::REPORTED {
+            let diagnostics = run_with_boundary_attributes(source, boundary::corpus::ATTRIBUTES);
+
+            assert!(
+                !diagnostics.is_empty(),
+                "should report a signature on no boundary: {source}"
+            );
+        }
     }
 
     #[test]
@@ -124,6 +203,60 @@ mod tests {
             .has_rule_id("lint.bool-param")
             .has_severity(Severity::Warn)
             .message_contains("parameter has type `bool`");
+    }
+
+    #[test]
+    fn bool_param_in_an_extern_block_not_flagged() {
+        let diagnostics = run("unsafe extern \"C\" { fn f(x: bool); }");
+
+        assert_no_diagnostics(&diagnostics);
+    }
+
+    #[test]
+    fn bool_param_in_an_extern_function_not_flagged() {
+        let diagnostics = run("pub extern \"C\" fn foo(x: bool) {}");
+
+        assert_no_diagnostics(&diagnostics);
+    }
+
+    #[test]
+    fn bool_param_behind_a_configured_attribute_not_flagged() {
+        let diagnostics = run_with_boundary_attributes("#[shard]\nfn foo(x: bool) {}", &["shard"]);
+
+        assert_no_diagnostics(&diagnostics);
+    }
+
+    #[test]
+    fn bool_param_behind_a_configured_attribute_written_in_full_not_flagged() {
+        let diagnostics =
+            run_with_boundary_attributes("#[topcoat::shard]\nfn foo(x: bool) {}", &["shard"]);
+
+        assert_no_diagnostics(&diagnostics);
+    }
+
+    #[test]
+    fn bool_param_behind_an_attribute_nobody_configured_flagged() {
+        let diagnostics = run("#[shard]\nfn foo(x: bool) {}");
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_diagnostic(&diagnostics[0]).message_contains("parameter has type `bool`");
+    }
+
+    #[test]
+    fn bool_param_behind_another_attribute_flagged() {
+        let diagnostics = run_with_boundary_attributes("#[inline]\nfn foo(x: bool) {}", &["shard"]);
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_diagnostic(&diagnostics[0]).message_contains("parameter has type `bool`");
+    }
+
+    #[test]
+    fn bool_struct_field_behind_a_configured_attribute_flagged() {
+        let diagnostics =
+            run_with_boundary_attributes("#[shard]\nstruct Config { verbose: bool }", &["shard"]);
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_diagnostic(&diagnostics[0]).message_contains("struct field has type `bool`");
     }
 
     #[test]
