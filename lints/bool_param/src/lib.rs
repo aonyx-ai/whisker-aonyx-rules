@@ -10,6 +10,9 @@ const RULE_ID: RuleId = RuleId::new("lint.bool-param");
 /// models. An enum with meaningful variant names makes the code
 /// self-documenting and prevents accidental transposition of arguments.
 ///
+/// The rule reads a declaration and a definition alike, so a `bool` on a
+/// trait method is reported where the trait fixes it.
+///
 /// The rule skips a signature that sits on a boundary, because a caller
 /// outside Rust fixes it: an `extern` ABI, an `extern` block, or an
 /// attribute macro the project named in `boundary-attributes`. It is the
@@ -47,6 +50,44 @@ fn is_bool_type(node: &DecoratedNode<'_>) -> bool {
     node.kind() == "primitive_type" && node.text() == "bool"
 }
 
+/// Reports every `bool` parameter the signature declares
+///
+/// A declaration and a definition are one position for this rule. An
+/// implementor writes a body against the signature a trait fixed, and every
+/// caller reads the trait, so a `bool` on a declaration reaches further than
+/// one on a free function.
+///
+/// The rule skips a signature on a boundary, because a caller outside Rust
+/// fixes it.
+fn check_signature(node: &DecoratedNode<'_>, boundary_attributes: &[String]) -> Vec<Diagnostic> {
+    if boundary::crosses_a_boundary(node, boundary_attributes) {
+        return Vec::new();
+    }
+
+    let Some(parameters) = node.child_by_field_name("parameters") else {
+        return Vec::new();
+    };
+
+    let mut diagnostics = Vec::new();
+    for param in parameters.named_children() {
+        if param.kind() != "parameter" {
+            continue;
+        }
+        let Some(ty) = param.child_by_field_name("type") else {
+            continue;
+        };
+        if is_bool_type(&ty) {
+            diagnostics.push(Diagnostic::new(
+                RULE_ID,
+                Severity::Warn,
+                "parameter has type `bool`; use an enum with meaningful variants".into(),
+                ty.span(),
+            ));
+        }
+    }
+    diagnostics
+}
+
 impl RustLintPass for BoolParam {
     fn configure(&mut self, options: &RuleOptions) {
         self.boundary_attributes = options
@@ -56,32 +97,11 @@ impl RustLintPass for BoolParam {
     }
 
     fn check_function_item(&mut self, node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
-        if boundary::crosses_a_boundary(node, &self.boundary_attributes) {
-            return Vec::new();
-        }
+        check_signature(node, &self.boundary_attributes)
+    }
 
-        let Some(parameters) = node.child_by_field_name("parameters") else {
-            return Vec::new();
-        };
-
-        let mut diagnostics = Vec::new();
-        for param in parameters.named_children() {
-            if param.kind() != "parameter" {
-                continue;
-            }
-            let Some(ty) = param.child_by_field_name("type") else {
-                continue;
-            };
-            if is_bool_type(&ty) {
-                diagnostics.push(Diagnostic::new(
-                    RULE_ID,
-                    Severity::Warn,
-                    "parameter has type `bool`; use an enum with meaningful variants".into(),
-                    ty.span(),
-                ));
-            }
-        }
-        diagnostics
+    fn check_function_signature_item(&mut self, node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
+        check_signature(node, &self.boundary_attributes)
     }
 
     fn check_struct_item(&mut self, node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
@@ -203,6 +223,23 @@ mod tests {
             .has_rule_id("lint.bool-param")
             .has_severity(Severity::Warn)
             .message_contains("parameter has type `bool`");
+    }
+
+    #[test]
+    fn bool_param_on_a_trait_declaration_flagged() {
+        let diagnostics = run("trait T {\n    fn f(&self, x: bool);\n}");
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_diagnostic(&diagnostics[0])
+            .has_rule_id("lint.bool-param")
+            .message_contains("parameter has type `bool`");
+    }
+
+    #[test]
+    fn bool_param_on_a_trait_declaration_with_a_default_body_flagged_once() {
+        let diagnostics = run("trait T {\n    fn f(&self, x: bool) {}\n}");
+
+        assert_eq!(diagnostics.len(), 1);
     }
 
     #[test]
