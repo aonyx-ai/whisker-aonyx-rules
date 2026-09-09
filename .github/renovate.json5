@@ -28,6 +28,24 @@
       schedule: ["on the first day of the month"],
     },
     {
+      // Cargo's own manager sees the same three lines the custom manager
+      // above reads, as three git dependencies, and opens the three pull
+      // requests that manager exists to prevent. It did: #10, #11 and #23,
+      // one per crate, each able to land on its own and leave the crates on
+      // different revisions of whisker.
+      //
+      // It also reads only the revision, never the release comment beside
+      // it, so it proposed a commit on whisker's main while the comment
+      // still named a release. A pin here names a release, because the
+      // release is what has prebuilt lint archives published for it.
+      //
+      // Turning it off for these three leaves the custom manager as the one
+      // voice on them, which is the whole point of having written it.
+      matchManagers: ["cargo"],
+      matchDepNames: ["whisker-rust", "whisker-testing", "whisker-types"],
+      enabled: false,
+    },
+    {
       // Whisker ships a prerelease today, and renovate passes over those
       // unless it is told not to.
       //
