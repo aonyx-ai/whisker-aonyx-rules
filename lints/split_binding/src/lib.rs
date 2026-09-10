@@ -145,7 +145,7 @@ fn analyze(block: &DecoratedNode<'_>) -> Vec<Diagnostic> {
 fn collect_identifiers<'a>(node: &DecoratedNode<'a>, out: &mut Vec<DecoratedNode<'a>>) {
     for child in node.named_children() {
         if child.kind() == "identifier" {
-            out.push(child.clone());
+            out.push(child);
         }
         collect_identifiers(&child, out);
     }
@@ -199,7 +199,7 @@ fn collect_sources<'a>(node: &DecoratedNode<'a>, out: &mut Vec<&'a str>) {
             .child_by_field_name("function")
             .filter(|function| function.kind() == "identifier"),
         "field_initializer" => node.child_by_field_name("field"),
-        "scoped_identifier" | "generic_function" => Some(node.clone()),
+        "scoped_identifier" | "generic_function" => Some(*node),
         _ => None,
     };
 

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use whisker_rust::RustLintPass;
 use whisker_types::{DecoratedNode, Diagnostic, RuleId, Severity, Span};
 
@@ -90,7 +88,7 @@ struct Aside {
 /// Turns the asides found in one doc comment into diagnostics
 fn diagnose(lines: Vec<DocLine<'_>>, node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
     let span = node.span();
-    let file = Arc::clone(span.file_arc());
+    let file = span.file_path().clone();
 
     find_asides(&lines)
         .into_iter()
@@ -108,7 +106,7 @@ fn diagnose(lines: Vec<DocLine<'_>>, node: &DecoratedNode<'_>) -> Vec<Diagnostic
                 format!(
                     "{dash} interrupts the sentence; use a colon, a period, or a subordinate clause"
                 ),
-                Span::new(Arc::clone(&file), offset, offset + length),
+                Span::new(file.clone(), offset, offset + length),
             )
         })
         .collect()
@@ -167,7 +165,7 @@ fn line_comment_lines<'a>(node: &DecoratedNode<'a>) -> Option<Vec<DocLine<'a>>> 
     }
 
     let mut lines = Vec::new();
-    let mut current = node.clone();
+    let mut current = *node;
     let mut position = index;
     while let Some(line) = doc_line(&current) {
         lines.push(line);
@@ -298,7 +296,7 @@ fn adjacent(
 
 /// Returns the text of the whole file, and the offset it starts at
 fn file_text<'a>(node: &DecoratedNode<'a>) -> (&'a str, usize) {
-    let mut root = node.clone();
+    let mut root = *node;
     while let Some(parent) = root.parent() {
         root = parent;
     }

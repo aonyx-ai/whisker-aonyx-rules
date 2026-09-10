@@ -1,7 +1,4 @@
-use std::path::Path;
-use std::sync::Arc;
-
-use whisker_types::{DecoratedNode, Span};
+use whisker_types::{DecoratedNode, FilePath, Span};
 
 /// The Markdown of one doc comment, joined the way rustdoc joins it
 ///
@@ -13,7 +10,7 @@ use whisker_types::{DecoratedNode, Span};
 ///
 /// [`Span`]: whisker_types::Span
 pub(crate) struct DocBlock {
-    file: Arc<Path>,
+    file: FilePath,
     content: String,
     lines: Vec<Line>,
 }
@@ -42,7 +39,7 @@ impl DocBlock {
     ///
     /// [`None`]: std::option::Option::None
     pub(crate) fn from_comments(comments: &[DecoratedNode<'_>]) -> Option<Self> {
-        let file = Arc::clone(comments.first()?.span().file_arc());
+        let file = comments.first()?.span().file_path().clone();
 
         let mut raw: Vec<(usize, &str)> = Vec::new();
         for comment in comments {
@@ -106,7 +103,7 @@ impl DocBlock {
     /// Panics if `start` is greater than `end`.
     pub(crate) fn span(&self, start: usize, end: usize) -> Span {
         Span::new(
-            Arc::clone(&self.file),
+            self.file.clone(),
             self.to_file_offset(start),
             self.to_file_offset(end),
         )
@@ -140,7 +137,7 @@ mod tests {
     fn comments(tree: &DecoratedTree) -> Vec<DecoratedNode<'_>> {
         fn walk<'a>(node: &DecoratedNode<'a>, found: &mut Vec<DecoratedNode<'a>>) {
             if node.kind() == "line_comment" || node.kind() == "block_comment" {
-                found.push(node.clone());
+                found.push(*node);
             }
             for child in node.named_children() {
                 walk(&child, found);

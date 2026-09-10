@@ -49,7 +49,7 @@ fn is_inside_block(node: &DecoratedNode<'_>) -> bool {
 /// An item writes its gate in front of itself, and a module or a file writes
 /// it inside, so both spellings count at every level of the walk.
 fn is_cfg_gated(node: &DecoratedNode<'_>) -> bool {
-    let mut current = Some(node.clone());
+    let mut current = Some(*node);
     loop {
         let Some(item) = current else {
             return false;

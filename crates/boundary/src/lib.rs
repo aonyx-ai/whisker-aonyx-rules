@@ -122,8 +122,8 @@ mod tests {
     fn signature<'a>(tree: &'a DecoratedTree) -> DecoratedNode<'a> {
         fn find<'a>(node: &DecoratedNode<'a>) -> Option<DecoratedNode<'a>> {
             match node.kind() {
-                "function_item" => return Some(node.clone()),
-                "function_signature_item" => return Some(node.clone()),
+                "function_item" => return Some(*node),
+                "function_signature_item" => return Some(*node),
                 _ => {}
             }
 

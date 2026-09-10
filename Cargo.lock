@@ -312,6 +312,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "proc-macro-crate"
+version = "3.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e67ba7e9b2b56446f1d419b1d807906278ffa1a658a8a5d8a39dcb1f5a78614f"
+dependencies = [
+ "toml_edit",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -484,6 +493,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustversion"
+version = "1.0.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
+
+[[package]]
 name = "rusty-fork"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -546,6 +561,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha2-const-stable"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5f179d4e11094a893b82fff208f74d448a7512f99f5a0acbd5c679b705f83ed9"
+
+[[package]]
 name = "shlex"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -558,6 +579,40 @@ dependencies = [
  "whisker-rust",
  "whisker-testing",
  "whisker-types",
+]
+
+[[package]]
+name = "stabby"
+version = "72.1.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3d53d2428934c46277fafd2d41e39357595aa1e47954c75db2b14ed90632f3cc"
+dependencies = [
+ "rustversion",
+ "stabby-abi",
+]
+
+[[package]]
+name = "stabby-abi"
+version = "72.1.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f375eae680bb54203ee5e47d4cd2ae7b79c0a79ed90919279f38f500ad53f190"
+dependencies = [
+ "rustc_version",
+ "rustversion",
+ "sha2-const-stable",
+ "stabby-macros",
+]
+
+[[package]]
+name = "stabby-macros"
+version = "72.1.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ea664671a576c5f7e32fee291ac123d82af5e92b0689beb3555347c00c76eef1"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -608,6 +663,36 @@ dependencies = [
  "whisker-rust",
  "whisker-testing",
  "whisker-types",
+]
+
+[[package]]
+name = "toml_datetime"
+version = "1.1.1+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3165f65f62e28e0115a00b2ebdd37eb6f3b641855f9d636d3cd4103767159ad7"
+dependencies = [
+ "serde_core",
+]
+
+[[package]]
+name = "toml_edit"
+version = "0.25.13+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6975367e4d2ef766d86af01ffad14b622fecc8d4357a998fbc4deb6e9bacaf9b"
+dependencies = [
+ "indexmap",
+ "toml_datetime",
+ "toml_parser",
+ "winnow",
+]
+
+[[package]]
+name = "toml_parser"
+version = "1.1.3+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d38ac1cf9b95face32296c0a3ede1fdc270627c9d9c02a7274dd6d960dc4d56"
+dependencies = [
+ "winnow",
 ]
 
 [[package]]
@@ -672,7 +757,7 @@ dependencies = [
 [[package]]
 name = "whisker-codegen"
 version = "0.1.0"
-source = "git+https://github.com/aonyx-ai/whisker.git?rev=1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c#1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965#a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965"
 dependencies = [
  "serde",
  "serde_json",
@@ -681,7 +766,7 @@ dependencies = [
 [[package]]
 name = "whisker-core"
 version = "0.1.0"
-source = "git+https://github.com/aonyx-ai/whisker.git?rev=1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c#1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965#a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965"
 dependencies = [
  "anyhow",
  "tree-sitter",
@@ -691,7 +776,7 @@ dependencies = [
 [[package]]
 name = "whisker-macros"
 version = "0.1.0"
-source = "git+https://github.com/aonyx-ai/whisker.git?rev=1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c#1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965#a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -701,7 +786,7 @@ dependencies = [
 [[package]]
 name = "whisker-rust"
 version = "0.1.0"
-source = "git+https://github.com/aonyx-ai/whisker.git?rev=1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c#1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965#a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965"
 dependencies = [
  "tree-sitter",
  "tree-sitter-rust",
@@ -713,7 +798,7 @@ dependencies = [
 [[package]]
 name = "whisker-testing"
 version = "0.1.0"
-source = "git+https://github.com/aonyx-ai/whisker.git?rev=1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c#1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965#a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965"
 dependencies = [
  "tree-sitter",
  "tree-sitter-rust",
@@ -724,10 +809,11 @@ dependencies = [
 [[package]]
 name = "whisker-types"
 version = "0.1.0"
-source = "git+https://github.com/aonyx-ai/whisker.git?rev=1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c#1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c"
+source = "git+https://github.com/aonyx-ai/whisker.git?rev=a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965#a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965"
 dependencies = [
  "anyhow",
  "rustc_version",
+ "stabby",
  "tree-sitter",
 ]
 
@@ -753,6 +839,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc"
 dependencies = [
  "windows-link",
+]
+
+[[package]]
+name = "winnow"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23b97319f7b8343df12cc98938e5c3eb436064524c8d2b4e30a1d3a36eecdf81"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]

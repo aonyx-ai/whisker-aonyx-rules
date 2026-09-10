@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use tree_sitter::{Node, Parser};
 use whisker_rust::{RustLintPass, language};
 use whisker_types::{DecoratedNode, Diagnostic, RuleId, Severity, Span};
@@ -158,11 +156,7 @@ impl RustLintPass for CommentedOutCode {
             .join("\n");
         let last = group.last().unwrap_or(node);
         let start = node.span();
-        let span = Span::new(
-            Arc::clone(start.file_arc()),
-            start.start(),
-            last.span().end(),
-        );
+        let span = Span::new(start.file_path().clone(), start.start(), last.span().end());
 
         self.report(&body, span)
     }
@@ -257,7 +251,7 @@ fn starts_its_own_line(node: &DecoratedNode<'_>) -> bool {
 fn group_starting_at<'a>(node: &DecoratedNode<'a>) -> Option<Vec<DecoratedNode<'a>>> {
     let siblings = match node.parent() {
         Some(parent) => parent.named_children(),
-        None => return Some(vec![node.clone()]),
+        None => return Some(vec![*node]),
     };
     let index = siblings
         .iter()
@@ -267,13 +261,13 @@ fn group_starting_at<'a>(node: &DecoratedNode<'a>) -> Option<Vec<DecoratedNode<'
         return None;
     }
 
-    let mut group = vec![node.clone()];
+    let mut group = vec![*node];
     for sibling in &siblings[index + 1..] {
         let last = group.last().expect("the group always holds the first node");
         if !continues_group(last, sibling) {
             break;
         }
-        group.push(sibling.clone());
+        group.push(*sibling);
     }
 
     Some(group)
