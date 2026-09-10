@@ -156,10 +156,7 @@ fn check_signature(node: &DecoratedNode<'_>, boundary: &[String]) -> Vec<Diagnos
 
 impl RustLintPass for RepeatedPrimitiveParams {
     fn configure(&mut self, options: &RuleOptions) {
-        self.boundary_attributes = options
-            .names(RULE_ID, boundary::OPTION)
-            .unwrap_or_default()
-            .to_vec();
+        self.boundary_attributes = options.names(RULE_ID, boundary::OPTION).unwrap_or_default();
     }
 
     fn check_function_item(&mut self, node: &DecoratedNode<'_>) -> Vec<Diagnostic> {

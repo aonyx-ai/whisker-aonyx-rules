@@ -38,6 +38,6 @@ tree-sitter = "0.27"
 # the release beside it says which one. Renovate reads the pair through a
 # custom manager and moves both, the way it moves a pinned action. Bump
 # `rust-toolchain.toml` with them when whisker's does.
-whisker-rust = { git = "https://github.com/aonyx-ai/whisker.git", rev = "a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965", default-features = false } # abi/file-path
-whisker-testing = { git = "https://github.com/aonyx-ai/whisker.git", rev = "a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965" } # abi/file-path
-whisker-types = { git = "https://github.com/aonyx-ai/whisker.git", rev = "a4382bd3a56ec3ec3fe1fc47854f2ce644f0b965" } # abi/file-path
+whisker-rust = { git = "https://github.com/aonyx-ai/whisker.git", rev = "bc7b32c02ae9dab472cb6e4aab135bf23c26cdd6", default-features = false } # abi/diagnostic-types
+whisker-testing = { git = "https://github.com/aonyx-ai/whisker.git", rev = "bc7b32c02ae9dab472cb6e4aab135bf23c26cdd6" } # abi/diagnostic-types
+whisker-types = { git = "https://github.com/aonyx-ai/whisker.git", rev = "bc7b32c02ae9dab472cb6e4aab135bf23c26cdd6" } # abi/diagnostic-types
