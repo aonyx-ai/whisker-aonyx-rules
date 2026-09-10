@@ -57,8 +57,8 @@ jobs:
           path: whisker
           persist-credentials: false
 
-      # Both repositories pin the same toolchain, and they have to: the
-      # handshake compares the rustc that built each side.
+      # The rules build with the toolchain this repository pins. Whisker
+      # loads them regardless of which rustc built them.
       - name: Install the pinned toolchain
         working-directory: rules
         run: rustup toolchain install

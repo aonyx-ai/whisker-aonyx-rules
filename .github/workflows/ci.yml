@@ -104,7 +104,7 @@ jobs:
         working-directory: whisker
         run: cargo build --release -p whisker
 
-      # Through the recipe, so that the toolchain it names applies here too.
+      # Through the recipe, so that this job runs what a developer runs.
       - name: Check the rules with themselves
         working-directory: rules
         run: just check-self ../whisker/target/release/whisker
