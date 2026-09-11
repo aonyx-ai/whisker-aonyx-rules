@@ -38,6 +38,6 @@ tree-sitter = "0.27"
 # and a tag can be moved, so the pin is a commit and the release beside it
 # says which one. Renovate reads the pair through a custom manager and
 # moves both, the way it moves a pinned action.
-whisker-rust = { git = "https://github.com/aonyx-ai/whisker.git", rev = "e14289dd8b157e2025d5ab4443bd4b5edf13604f", default-features = false } # abi/drop-rustc-check
-whisker-testing = { git = "https://github.com/aonyx-ai/whisker.git", rev = "e14289dd8b157e2025d5ab4443bd4b5edf13604f" } # abi/drop-rustc-check
-whisker-types = { git = "https://github.com/aonyx-ai/whisker.git", rev = "e14289dd8b157e2025d5ab4443bd4b5edf13604f" } # abi/drop-rustc-check
+whisker-rust = { git = "https://github.com/aonyx-ai/whisker.git", rev = "c49a9259a8548e2397acae766af499f1fbf6dccb", default-features = false }
+whisker-testing = { git = "https://github.com/aonyx-ai/whisker.git", rev = "c49a9259a8548e2397acae766af499f1fbf6dccb" }
+whisker-types = { git = "https://github.com/aonyx-ai/whisker.git", rev = "c49a9259a8548e2397acae766af499f1fbf6dccb" }
