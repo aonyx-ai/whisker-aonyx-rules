@@ -1,9 +1,10 @@
 # Every rule in this repository is a whisker plugin: a cdylib that whisker
-# builds at check time and loads into its own process. Rust has no stable ABI,
-# so a plugin is only coherent with the whisker that loads it when the same
-# rustc compiled both from the same whisker source. That is why the pin below
-# and `rust-toolchain.toml` move together, and why a mismatch is a loud
-# refusal rather than a subtle wrong answer.
+# builds at check time and loads into its own process. Rust has no stable ABI
+# of its own, so whisker lays every type that crosses that boundary out with
+# stabby, whose layouts hold under any compiler. A plugin is coherent with the
+# whisker that loads it when both were built against the same whisker source.
+# That is why the pin below is a commit, and why a mismatch refuses the plugin
+# with an error. The toolchain this repository pins is its own choice.
 [workspace]
 # `lints/*` are the rules themselves, each a cdylib whisker loads.
 # `crates/*` hold what more than one rule needs, as ordinary rlibs that
@@ -33,11 +34,10 @@ proptest = "1"
 # agree on the type that crosses the boundary.
 tree-sitter = "0.27"
 # One pin for every rule. Whisker is not published, so these are git
-# dependencies. The commit decides which rustc and which whisker source
-# produced a plugin, and a tag can be moved, so the pin is a commit and
-# the release beside it says which one. Renovate reads the pair through a
-# custom manager and moves both, the way it moves a pinned action. Bump
-# `rust-toolchain.toml` with them when whisker's does.
-whisker-rust = { git = "https://github.com/aonyx-ai/whisker.git", rev = "1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c", default-features = false } # v0.1.0-rc.4
-whisker-testing = { git = "https://github.com/aonyx-ai/whisker.git", rev = "1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c" } # v0.1.0-rc.4
-whisker-types = { git = "https://github.com/aonyx-ai/whisker.git", rev = "1aef2a1fbd6bd8d5f25654a2ee760b2867cf2f9c" } # v0.1.0-rc.4
+# dependencies. The commit decides which whisker source produced a plugin,
+# and a tag can be moved, so the pin is a commit and the release beside it
+# says which one. Renovate reads the pair through a custom manager and
+# moves both, the way it moves a pinned action.
+whisker-rust = { git = "https://github.com/aonyx-ai/whisker.git", rev = "e14289dd8b157e2025d5ab4443bd4b5edf13604f", default-features = false } # abi/drop-rustc-check
+whisker-testing = { git = "https://github.com/aonyx-ai/whisker.git", rev = "e14289dd8b157e2025d5ab4443bd4b5edf13604f" } # abi/drop-rustc-check
+whisker-types = { git = "https://github.com/aonyx-ai/whisker.git", rev = "e14289dd8b157e2025d5ab4443bd4b5edf13604f" } # abi/drop-rustc-check

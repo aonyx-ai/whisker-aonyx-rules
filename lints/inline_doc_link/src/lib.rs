@@ -108,7 +108,7 @@ fn doc_comment_group<'a>(node: &DecoratedNode<'a>) -> Option<Vec<DecoratedNode<'
         return None;
     }
 
-    let mut group = vec![node.clone()];
+    let mut group = vec![*node];
     for candidate in siblings.iter().skip(index + 1) {
         if !continues(
             group.last().expect("the run starts with one line"),
@@ -116,7 +116,7 @@ fn doc_comment_group<'a>(node: &DecoratedNode<'a>) -> Option<Vec<DecoratedNode<'
         ) {
             break;
         }
-        group.push(candidate.clone());
+        group.push(*candidate);
     }
 
     Some(group)

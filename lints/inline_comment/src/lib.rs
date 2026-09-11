@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use tree_sitter::Node;
 use whisker_rust::RustLintPass;
 use whisker_types::{DecoratedNode, Diagnostic, RuleId, Severity, Span};
@@ -166,7 +164,7 @@ fn check_comment(node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
     };
 
     let span = node.span();
-    let file = Arc::clone(span.file_arc());
+    let file = span.file_path().clone();
     let end = run_end(raw, parent.text(), parent.raw().start_byte());
     let span = Span::new(file, span.start(), end);
 

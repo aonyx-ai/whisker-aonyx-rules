@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use whisker_rust::RustLintPass;
 use whisker_types::{DecoratedNode, Diagnostic, RuleId, Severity, Span};
 
@@ -95,7 +93,7 @@ fn check_comment(node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
             RULE_ID,
             Severity::Warn,
             format!("`{marker}` comment: track this work in the issue tracker instead"),
-            Span::new(Arc::clone(span.file_arc()), start, start + marker.len()),
+            Span::new(span.file_path().clone(), start, start + marker.len()),
         ));
     }
 

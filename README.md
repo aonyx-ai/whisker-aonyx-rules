@@ -49,22 +49,23 @@ spoke.
 ## Pinning
 
 A rule is a `cdylib` that whisker loads into its own process. Rust has no
-stable ABI, so whisker refuses any plugin that was not built by the same
-rustc from the same whisker source as the binary doing the loading. Three
-things therefore move together:
+stable ABI of its own, so whisker lays every type that crosses that boundary
+out with stabby and loads a plugin regardless of which rustc built it. It
+still refuses a plugin built against another whisker revision. Two things
+therefore move together:
 
-- The `rev` in this repository's `Cargo.toml`, which every rule builds
-  against. `just pin` prints it.
-- `rust-toolchain.toml`, which must match whisker's.
+- The `rev` that the three whisker dependencies in this repository's
+  `Cargo.toml` share, which every rule builds against. `just pin` prints it.
 - The `rev` that a project names in its own `.config/whisker.toml`, which
   should be a commit of this repository built against the whisker that
   project runs.
 
+`rust-toolchain.toml` is this repository's own choice.
+
 To bump: move the three `rev` values in `[workspace.dependencies]` to the
-new whisker commit, copy whisker's `rust-toolchain.toml` over this one, run
-`cargo update -w`, and let CI's dogfood job confirm the pair still loads. A
-mismatch is a refusal with an error naming what to rebuild, never a silent
-wrong answer.
+new whisker commit, run `cargo update -w`, and let CI's dogfood job confirm
+the pair still loads. A mismatch is a refusal with an error naming what to
+rebuild, never a silent wrong answer.
 
 ## Adding a rule
 

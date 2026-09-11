@@ -1,8 +1,6 @@
 mod doc_line;
 mod sentence;
 
-use std::sync::Arc;
-
 use whisker_rust::RustLintPass;
 use whisker_types::{DecoratedNode, Diagnostic, RuleId, Severity, Span};
 
@@ -147,11 +145,7 @@ fn report(lines: &[DocLine<'_>], node: &DecoratedNode<'_>) -> Vec<Diagnostic> {
                     "doc sentence is {} words, over the {MAX_WORDS}-word limit",
                     sentence.words()
                 ),
-                Span::new(
-                    Arc::clone(file.file_arc()),
-                    sentence.start(),
-                    sentence.end(),
-                ),
+                Span::new(file.file_path().clone(), sentence.start(), sentence.end()),
             )
         })
         .collect()
